@@ -1,0 +1,13 @@
+      // Get target position in canvas coordinates
+      const targetX = touchControlRef.current.targetX - rect.left;
+      const targetY = touchControlRef.current.targetY - rect.top;
+      
+      // Offset target position so ship appears above finger (not covered)
+      // Shift the target point upward so the ship nose points at finger position
+      const fingerOffsetY = 80; // Ship nose should be at finger position
+      const adjustedTargetY = targetY + fingerOffsetY;
+      
+      // Calculate direction to target
+      const dx = targetX - player.x;
+      const dy = adjustedTargetY - player.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);

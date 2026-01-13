@@ -1,0 +1,37 @@
+      {/* Loading Screen */}
+      {gameState === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950">
+          <div className="text-center space-y-6 p-8 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl border border-cyan-500/30 shadow-2xl max-w-md">
+            <h2 className="title-text text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
+              SPACE SNAKE
+            </h2>
+            
+            <div className="space-y-4">
+              {/* Loading Progress Bar */}
+              <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border border-cyan-500/30">
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all duration-300 ease-out"
+                  style={{ width: `${loadingProgress * 100}%` }}
+                />
+              </div>
+              
+              {/* Percentage */}
+              <div className="text-2xl font-bold text-cyan-400 numbers-text">
+                {Math.round(loadingProgress * 100)}%
+              </div>
+              
+              {/* Status */}
+              <div className="text-sm text-gray-400">
+                {loadingStatus}
+              </div>
+              
+              {/* Loading animation */}
+              <div className="flex justify-center space-x-2">
+                <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}

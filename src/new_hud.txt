@@ -1,0 +1,42 @@
+          <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+            <div className="text-white space-y-2 pointer-events-auto">
+              <div className="text-sm font-bold">Score: <span className="numbers-text">{score}</span></div>
+              <div className="text-sm">High Score: <span className="numbers-text">{highScore}</span></div>
+              <div className="text-sm">Level: <span className="numbers-text">{level}</span></div>
+              <div className="text-sm">Lives: {'❤️'.repeat(lives)}</div>
+              {!bossRef.current && (
+                <div className="text-sm font-bold">
+                  ⏱️ <span className="numbers-text">{bossTimerDisplayRef.current}</span>s
+                </div>
+              )}
+              {bossRef.current && (
+                <div className="text-sm text-yellow-400 font-bold title-text">
+                  {bossRef.current.stage.name}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col items-end gap-2 pointer-events-auto">
+              <button
+                onClick={() => {
+                  setShowPauseMenu(true);
+                  setGameState('paused');
+                }}
+                className="bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 text-white text-sm border border-white/20 hover:bg-black/80 transition-colors"
+              >
+                ⚙️ Options
+              </button>
+              
+              <div className="flex gap-2 flex-wrap max-w-xs justify-end">
+                {activePowerUps.map((powerUp, index) => (
+                  <div
+                    key={index}
+                    className="bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 text-white text-xs border border-white/20"
+                  >
+                    <span>{powerUp.icon}</span>
+                    <span className="ml-0.5">{powerUp.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>

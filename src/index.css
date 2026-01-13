@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom title font */
+@font-face {
+  font-family: 'TitleFont';
+  src: url('./assets/fonts/title-text.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Custom body font */
+@font-face {
+  font-family: 'BodyFont';
+  src: url('./assets/fonts/body-text.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Custom numbers font */
+@font-face {
+  font-family: 'NumbersFont';
+  src: url('./assets/fonts/numbers.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: 'BodyFont', Arial, sans-serif;
+}
+
+/* Title text class for game titles */
+.title-text {
+  font-family: 'TitleFont', Arial, sans-serif;
+}
+
+/* Numbers class for scores and stage numbers */
+.numbers-text {
+  font-family: 'NumbersFont', Arial, sans-serif;
+}

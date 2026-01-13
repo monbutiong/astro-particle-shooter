@@ -1,0 +1,61 @@
+  // Main game loop
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let lastTime = 0;
+    let frameCount = 0;
+    const gameStartTime = Date.now();
+
+    const gameLoop = (timestamp) => {
+      try {
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+        
+        frameCount++;
+        const elapsed = Date.now() - gameStartTime;
+        
+        // Log every 60 frames (~1 second)
+        if (frameCount % 60 === 0) {
+          console.log(`%c[GAME LOOP] Frame: ${frameCount}, Time: ${(elapsed/1000).toFixed(2)}s, Delta: ${deltaTime.toFixed(2)}ms`, 'background: #222; color: #bada55; font-size: 12px; padding: 2px;');
+        }
+
+        // Detailed logging for first 120 frames (first 2 seconds when freeze occurs)
+        if (frameCount <= 120) {
+          console.log(`%c[FRAME ${frameCount}] UPDATE START`, 'color: #00ff00;', { timestamp, deltaTime, elapsed });
+        }
+
+        update(deltaTime, canvas);
+
+        if (frameCount <= 120) {
+          console.log(`%c[FRAME ${frameCount}] UPDATE COMPLETE`, 'color: #00ffff;');
+        }
+
+        draw(ctx, canvas);
+
+        if (frameCount <= 120) {
+          console.log(`%c[FRAME ${frameCount}] DRAW COMPLETE`, 'color: #ff00ff;');
+        }
+
+        gameLoopRef.current = requestAnimationFrame(gameLoop);
+      } catch (error) {
+        console.error('%c[GAME LOOP] CRITICAL ERROR:', 'background: #ff0000; color: #fff; font-size: 16px;', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('Frame info:', { frameCount, timestamp, deltaTime, elapsed: Date.now() - gameStartTime });
+      }
+    };
+
+    console.log('%c========================================', 'color: #00ff00;');
+    console.log('%c[GAME LOOP] === GAME LOOP STARTING ===', 'color: #00ff00; font-size: 16px; font-weight: bold;');
+    console.log('%c========================================', 'color: #00ff00;');
+    gameLoopRef.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      if (gameLoopRef.current) {
+        console.log('[GAME LOOP] Canceling animation frame');
+        cancelAnimationFrame(gameLoopRef.current);
+      }
+    };
+  }, [gameState]);

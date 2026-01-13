@@ -1,0 +1,38 @@
+  // Handle keyboard input
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      keysRef.current[e.key.toLowerCase()] = true;
+      keysRef.current[e.code] = true;
+      
+      // Pause toggle with ESC or P key
+      if ((e.key === 'Escape' || e.key.toLowerCase() === 'p') && gameState === 'playing') {
+        e.preventDefault();
+        setShowPauseMenu(true);
+        setGameState('paused');
+      }
+      
+      // Resume with ESC when paused
+      if ((e.key === 'Escape' || e.key.toLowerCase() === 'p') && gameState === 'paused' && showPauseMenu) {
+        e.preventDefault();
+        setShowPauseMenu(false);
+        setGameState('playing');
+      }
+      
+      if (e.key === ' ' && gameState === 'playing') {
+        e.preventDefault();
+      }
+    };
+    
+    const handleKeyUp = (e) => {
+      keysRef.current[e.key.toLowerCase()] = false;
+      keysRef.current[e.code] = false;
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [gameState, showPauseMenu]);

@@ -1,0 +1,145 @@
+$filePath = "C:\xampp\htdocs\react-project\space-snake\src\SpaceSnakeGame.jsx"
+$backupPath = "C:\xampp\htdocs\react-project\space-snake\src\SpaceSnakeGame_backup2.jsx"
+
+# Create backup
+Copy-Item $filePath $backupPath -Force
+
+# Read file
+$content = Get-Content $filePath -Raw
+
+# Define old and new BOSS_STAGES
+$oldPattern = '(?s)// Boss stages configuration - static, unchanging design\s*const BOSS_STAGES = \[.*?\n  \];'
+
+$newBossStages = @'
+  // Boss stages configuration - using boss images from /assets/boss/
+  // Base HP for boss 1, with 20% increase per boss
+  // Each boss appears twice: flees at 30% HP first time, final defeat second time
+  // After completing all 13 bosses, cycle repeats with 30% larger size
+  const BOSS_STAGES = [
+    {
+      stage: 1,
+      name: 'Boss 1',
+      image: '/assets/boss/boss-1.fw.png',
+      size: 100,
+      hp: 100,
+      attackSpeed: 1500,
+      bulletColor: '#FF0000',
+    },
+    {
+      stage: 2,
+      name: 'Boss 2',
+      image: '/assets/boss/boss-2.fw.png',
+      size: 100,
+      hp: 120,
+      attackSpeed: 1450,
+      bulletColor: '#0066FF',
+    },
+    {
+      stage: 3,
+      name: 'Boss 3',
+      image: '/assets/boss/boss-3.fw.png',
+      size: 100,
+      hp: 144,
+      attackSpeed: 1400,
+      bulletColor: '#8B00FF',
+    },
+    {
+      stage: 4,
+      name: 'Boss 4',
+      image: '/assets/boss/boss-4.fw.png',
+      size: 100,
+      hp: 173,
+      attackSpeed: 1350,
+      bulletColor: '#FFD700',
+    },
+    {
+      stage: 5,
+      name: 'Boss 5',
+      image: '/assets/boss/boss-5.fw.png',
+      size: 100,
+      hp: 207,
+      attackSpeed: 1300,
+      bulletColor: '#00FF00',
+    },
+    {
+      stage: 6,
+      name: 'Boss 6',
+      image: '/assets/boss/boss-6.fw.png',
+      size: 100,
+      hp: 249,
+      attackSpeed: 1250,
+      bulletColor: '#FF00FF',
+    },
+    {
+      stage: 7,
+      name: 'Boss 7',
+      image: '/assets/boss/boss-7.fw.png',
+      size: 100,
+      hp: 299,
+      attackSpeed: 1200,
+      bulletColor: '#1a1a1a',
+    },
+    {
+      stage: 8,
+      name: 'Boss 8',
+      image: '/assets/boss/boss-8.fw.png',
+      size: 100,
+      hp: 359,
+      attackSpeed: 1150,
+      bulletColor: '#FF4500',
+    },
+    {
+      stage: 9,
+      name: 'Boss 9',
+      image: '/assets/boss/boss-9.fw.png',
+      size: 100,
+      hp: 430,
+      attackSpeed: 1100,
+      bulletColor: '#00BFFF',
+    },
+    {
+      stage: 10,
+      name: 'Boss 10',
+      image: '/assets/boss/boss-10.fw.png',
+      size: 100,
+      hp: 516,
+      attackSpeed: 1050,
+      bulletColor: '#9400D3',
+    },
+    {
+      stage: 11,
+      name: 'Boss 11',
+      image: '/assets/boss/boss-11.fw.png',
+      size: 100,
+      hp: 620,
+      attackSpeed: 1000,
+      bulletColor: '#FFA500',
+    },
+    {
+      stage: 12,
+      name: 'Boss 12',
+      image: '/assets/boss/boss-12.fw.png',
+      size: 100,
+      hp: 744,
+      attackSpeed: 950,
+      bulletColor: '#00FF7F',
+    },
+    {
+      stage: 13,
+      name: 'Boss 13',
+      image: '/assets/boss/boss-13.fw.png',
+      size: 100,
+      hp: 893,
+      attackSpeed: 900,
+      bulletColor: '#FFFFFF',
+    },
+  ];
+'@
+
+# Replace
+$newContent = $content -replace $oldPattern, $newBossStages
+
+# Write back
+Set-Content $filePath $newContent -NoNewline
+
+Write-Host "BOSS_STAGES replaced successfully"

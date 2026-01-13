@@ -1,0 +1,13 @@
+﻿   </div>
+
+            <div className="text-gray-400 text-sm space-y-1">
+              <div>ðŸŽ® WASD or Arrow Keys to move</div>
+              <div>ðŸ”« Auto-fires or press SPACE to shoot</div>
+              <div className="text-xs mt-2 text-gray-500">
+                ðŸ’¡ Tip: Destroy Tanks for Super, Ghosts for Extra Lives!
+              </div>
+            </div>
+
+            <button
+              onClick={handleStart}
+              className="px-8 py-4 bg-gradient-to-r from-cyan-

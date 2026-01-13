@@ -1,0 +1,62 @@
+  // Initialize all sounds with progress tracking
+  const initSounds = useCallback(async (onProgress) => {
+    if (Object.keys(soundsRef.current).length > 0) {
+      if (onProgress) onProgress(1.0, 'Already loaded');
+      return 1.0; // Already loaded
+    }
+
+    const soundPaths = {
+      // Shooting sounds
+      shoot: '/src/assets/audio/fire.wav',
+      shootNormal: '/src/assets/audio/fire-normal.wav',
+      
+      // Enemy sounds
+      enemyHit: '/src/assets/audio/enemy-hit.wav',
+      enemyDestroy: '/src/assets/audio/fireworks.wav',
+      pinHit: '/src/assets/audio/pin_hit.wav',
+      slotHit: '/src/assets/audio/slot_hit.wav',
+      
+      // Boss sounds
+      bossDead: '/src/assets/audio/boss dead.wav',
+      
+      // Power-up sounds
+      powerUp: '/src/assets/audio/power-ups.wav',
+      powerUpSpecial: '/src/assets/audio/power-ups-1.wav',
+      jackpot: '/src/assets/audio/jackpot.wav',
+      
+      // Game state sounds
+      uiClick: '/src/assets/audio/ui_click.wav',
+      gameOver: '/src/assets/audio/game_over.wav',
+      newRecord: '/src/assets/audio/new_record.wav',
+      winFireworks: '/src/assets/audio/win_fireworks.wav',
+      
+      // Background music
+      bgmLevel1: '/src/assets/audio/background-sound-1-to-10.mp3',
+      bgmLevel2: '/src/assets/audio/background-sound-11-to-20.mp3',
+      bgmLevel3: '/src/assets/audio/background-sound-21-to-30.mp3',
+      bgmLevel4: '/src/assets/audio/background-sound-31-to-all.mp3',
+    };
+
+    const soundNames = Object.keys(soundPaths);
+    let loadedCount = 0;
+    const total = soundNames.length;
+
+    for (const [name, path] of Object.entries(soundPaths)) {
+      try {
+        const audio = await loadSound(path);
+        soundsRef.current[name] = audio;
+        loadedCount++;
+        if (onProgress) {
+          onProgress(loadedCount / total, name);
+        }
+      } catch (error) {
+        console.warn(`Failed to load sound: ${name}`, error);
+        loadedCount++;
+        if (onProgress) {
+          onProgress(loadedCount / total, name);
+        }
+      }
+    }
+    
+    return 1.0;
+  }, [loadSound]);

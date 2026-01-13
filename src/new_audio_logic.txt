@@ -1,0 +1,13 @@
+  // Start background music when game state changes to playing
+  useEffect(() => {
+    // Play music when transitioning to playing state (audio already initialized in handleStart)
+    if (gameState === 'playing' && audioInitializedRef.current && !musicRef.current) {
+      soundManager.playMusic(levelRef.current);
+    }
+    
+    // Stop music and reset audio initialized flag only on game over
+    if (gameState === 'gameover') {
+      soundManager.stopMusic();
+      audioInitializedRef.current = false;
+    }
+  }, [gameState, soundManager]);

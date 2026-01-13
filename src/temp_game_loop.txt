@@ -1,0 +1,208 @@
+  // Main game loop
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let lastTime = 0;
+    let frameCount = 0;
+    const startTime = Date.now();
+
+    const gameLoop = (timestamp) => {
+      const deltaTime = timestamp - lastTime;
+      lastTime = timestamp;
+      
+      frameCount++;
+      const elapsed = Date.now() - startTime;
+      
+      // Log every 60 frames (approximately 1 second)
+      if (frameCount % 60 === 0) {
+        console.log(`[GAME LOOP] Frame: ${frameCount}, Elapsed: ${(elapsed/1000).toFixed(2)}s, Delta: ${deltaTime.toFixed(2)}ms`);
+      }
+
+      // Log entry to update function
+      console.log(`[UPDATE START] Frame: ${frameCount}, Time: ${(elapsed/1000).toFixed(2)}s`);
+      update(deltaTime, canvas);
+      console.log(`[UPDATE END] Frame: ${frameCount}, Time: ${(elapsed/1000).toFixed(2)}s`);
+      
+      // Log entry to draw function
+      console.log(`[DRAW START] Frame: ${frameCount}, Time: ${(elapsed/1000).toFixed(2)}s`);
+      draw(ctx, canvas);
+      console.log(`[DRAW END] Frame: ${frameCount}, Time: ${(elapsed/1000).toFixed(2)}s`);
+
+      gameLoopRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    console.log('[GAME LOOP] === GAME LOOP STARTING ===');
+    gameLoopRef.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+     if (gameLoopRef.current) {
+       cancelAnimationFrame(gameLoopRef.current);
+     }
+   };
+  }, [gameState]);
+
+  // Update game state
+  const update = (deltaTime, canvas) => {
+    console.log('[UPDATE] Function entered');
+    const player = playerRef.current;
+
+    // Player movement
+    let moveX = 0;
+    let moveY = 0;
+
+    if (keysRef.current['arrowleft'] || keysRef.current['a']) {
+      moveX = -1;
+    }
+    if (keysRef.current['arrowright'] || keysRef.current['d']) {
+      moveX = 1;
+    }
+    if (keysRef.current['arrowup'] || keysRef.current['w']) {
+      moveY = -1;
+    }
+    if (keysRef.current['arrowdown'] || keysRef.current['s']) {
+      moveY = 1;
+    }
+
+    // Touch/Mouse input - make ship follow cursor directly
+    if (touchControlRef.current.active && touchControlRef.current.targetX !== undefined) {
+      const rect = canvas.getBoundingClientRect();
+      
+      // Get target position in canvas coordinates
+      const targetX = touchControlRef.current.targetX - rect.left;
+      const targetY = touchControlRef.current.targetY - rect.top;
+      
+      // Calculate direction to target
+      const dx = targetX - player.x;
+      const adjustedTargetY = targetY - 80;
+      const dy = adjustedTargetY - player.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Only move if we're not already at the target (with small threshold)
+      if (distance > 5) {
+        const currentSpeed = player.speedBoost ? player.speed * 1.8 : player.speed;
+        
+        // Normalize direction and apply speed
+        moveX = (dx / distance) * Math.min(1, distance / 10);
+        moveY = (dy / distance) * Math.min(1, distance / 10);
+        
+        // Apply smooth follow movement - increased speed for better responsiveness
+        player.x += moveX * currentSpeed * 1.5;
+        player.y += moveY * currentSpeed * 1.5;
+      }
+      
+      // Keep player in bounds
+      player.x = Math.max(player.width / 2, Math.min(canvas.width - player.width / 2, player.x));
+      player.y = Math.max(player.height / 2, Math.min(canvas.height - player.height / 2, player.y));
+    } else {
+      // Apply keyboard movement
+      // Apply movement with speed boost
+      const currentSpeed = player.speedBoost ? player.speed * 1.8 : player.speed;
+      player.x += moveX * currentSpeed;
+      player.y += moveY * currentSpeed;
+
+      // Keep player in bounds
+      player.x = Math.max(player.width / 2, Math.min(canvas.width - player.width / 2, player.x));
+      player.y = Math.max(player.height / 2, Math.min(canvas.height - player.height / 2, player.y));
+    }
+
+    // Auto-fire shooting
+    const now = Date.now();
+    const fireRate = player.superMode ? 50 : (player.rapidFire ? player.fireRate / 2.5 : player.fireRate);
+    
+    if (player.autoFire || keysRef.current[' ']) {
+      if (now - player.lastShot > fireRate) {
+        player.lastShot = now;
+        
+        if (player.superMode) {
+          // Super mode:全方位射击
+          for (let i = 0; i < 16; i++) {
+            const angle = (Math.PI * 2 / 16) * i;
+            bulletsRef.current.push({
+              x: player.x,
+              y: player.y - 30,
+              vx: Math.cos(angle) * 12,
+              vy: Math.sin(angle) * 12,
+              size: 8,
+              color: '#FF00FF',
+              damage: 5
+            });
+          }
+        } else if (player.spreadShot) {
+          soundManager.playSound('shoot');
+          bulletsRef.current.push(
+            { x: player.x, y: player.y - 30, vx: 0, vy: -10, size: 4, color: '#FFD700', damage: 1 },
+            { x: player.x, y: player.y - 30, vx: -2, vy: -9, size: 4, color: '#FFD700', damage: 1 },
+            { x: player.x, y: player.y - 30, vx: 2, vy: -9, size: 4, color: '#FFD700', damage: 1 }
+          );
+        } else {
+          soundManager.playSound('shoot');
+          bulletsRef.current.push({
+            x: player.x,
+            y: player.y - 30,
+            vx: 0,
+            vy: -10,
+            size: 5,
+            color: '#00FFFF',
+            damage: 1
+          });
+        }
+      }
+    }
+
+    // Spawn enemies
+    if (Math.random() < 0.02 + level * 0.005) {
+      if (enemiesRef.current.length < 10 + level * 2) {
+        console.log('[UPDATE] Creating enemy');
+        enemiesRef.current.push(createEnemy(canvas.width, canvas.height, level));
+      }
+    }
+
+    // Update bullets
+    console.log('[UPDATE] Updating bullets');
+    bulletsRef.current = bulletsRef.current.filter(bullet => {
+      bullet.x += bullet.vx;
+      bullet.y += bullet.vy;
+      return bullet.y > -20 && bullet.y < canvas.height + 20 && 
+             bullet.x > -20 && bullet.x < canvas.width + 20;
+    });
+
+    // Boss spawn timer - every 60 seconds
+    if (!bossRef.current) {
+       bossTimerRef.current += deltaTime;
+       
+       // Update boss timer display (convert to seconds)
+       const newTimerDisplay = Math.max(0, Math.ceil((60000 - bossTimerRef.current) / 1000));
+       bossTimerDisplayRef.current = newTimerDisplay;
+       
+       // Show warning when boss is about to spawn (10 seconds before)
+       if (bossTimerDisplayRef.current <= 10 && bossTimerDisplayRef.current > 0) {
+        if (!bossWarningRef.current) {
+          bossWarningRef.current = true;
+        }
+      } else {
+        if (bossWarningRef.current) {
+          bossWarningRef.current = false;
+        }
+      }
+      
+      if (bossTimerRef.current >= 60000) { // 60 seconds
+        bossTimerRef.current = 0;
+        bossTimerDisplayRef.current = 60;
+        bossWarningRef.current = false;
+        const bossStage = Math.floor(levelRef.current / 2) + 1;
+        console.log('[UPDATE] Creating boss');
+        bossRef.current = createBoss(canvas.width, bossStage);
+        
+        // Clear regular enemies when boss spawns
+        enemiesRef.current.forEach(enemy => {
+          createExplosion(enemy.x, enemy.y, enemy.type.color, 10);
+        });
+        enemiesRef.current = [];
+      }
+    }
+
+    // Update enemies
+    console.log('[UPDATE] Updating enemies');
+    enemiesRef.current = enemiesRef.current.filter(enemy => {

@@ -1,0 +1,22 @@
+  // Play sound effect - FIXED: Made asynchronous to prevent blocking game loop
+  const playSound = useCallback((soundName, volume = sfxVolumeRef.current) => {
+    const sound = soundsRef.current[soundName];
+    if (!sound) return;
+
+    // Play sound asynchronously to avoid blocking game loop
+    setTimeout(() => {
+      try {
+        const audio = sound.cloneNode();
+        audio.volume = volume;
+        audio.currentTime = 0;
+        
+        if (audioContextRef.current && audioContextRef.current.state === 'running') {
+          audio.play().catch(err => {
+            // Silently fail - don't spam console
+          });
+        }
+      } catch (error) {
+        // Silently fail - sound errors shouldn't crash the game
+      }
+    }, 0);
+  }, []);

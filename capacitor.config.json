@@ -1,0 +1,14 @@
+{
+  "appId": "com.monxdev.astroparticleshooter",
+  "appName": "Astro Particle Shooter",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystoreAlias": ""
+    }
+  }
+}

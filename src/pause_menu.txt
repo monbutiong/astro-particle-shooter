@@ -1,0 +1,76 @@
+      {/* Pause Menu */}
+      {showPauseMenu && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
+          <div className="text-center space-y-6 p-8 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl border border-cyan-500/30 shadow-2xl max-w-md">
+            <h2 className="title-text text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
+              PAUSED
+            </h2>
+
+            {/* SFX Volume Control */}
+            <div className="space-y-2 text-left">
+              <label className="text-white text-sm font-bold flex items-center gap-2">
+                🔊 Sound Effects Volume
+                <span className="text-cyan-400 numbers-text">{Math.round(sfxVolume * 100)}%</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={sfxVolume}
+                onChange={(e) => {
+                  const newVolume = parseFloat(e.target.value);
+                  setSfxVolume(newVolume);
+                  soundManager.setSFXVolume(newVolume);
+                }}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
+            </div>
+
+            {/* Music Volume Control */}
+            <div className="space-y-2 text-left">
+              <label className="text-white text-sm font-bold flex items-center gap-2">
+                🎵 Background Music Volume
+                <span className="text-cyan-400 numbers-text">{Math.round(musicVolume * 100)}%</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={musicVolume}
+                onChange={(e) => {
+                  const newVolume = parseFloat(e.target.value);
+                  setMusicVolume(newVolume);
+                  soundManager.setMusicVolume(newVolume);
+                }}
+                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-4 justify-center pt-4">
+              <button
+                onClick={() => {
+                  setShowPauseMenu(false);
+                  setGameState('playing');
+                }}
+                className="title-text px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white text-lg font-bold rounded-lg hover:from-green-400 hover:to-green-500 transition-all transform hover:scale-105 shadow-lg"
+              >
+                ▶️ Resume
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowPauseMenu(false);
+                  soundManager.stopMusic();
+                  setGameState('start');
+                }}
+                className="title-text px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-lg font-bold rounded-lg hover:from-red-400 hover:to-red-500 transition-all transform hover:scale-105 shadow-lg"
+              >
+                🚪 Quit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
