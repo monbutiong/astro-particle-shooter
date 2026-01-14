@@ -38,15 +38,30 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     yellow: '#ffff44'
   };
   
+  // Get avatar image based on character type and emotion
+  const getAvatarImage = () => {
+    const emotionMap = {
+      normal: 'ready',
+      happy: 'power-up',
+      hurt: 'cry',
+      scared: 'scared'
+    };
+    const emotion = emotionMap[avatarState] || 'ready';
+    return `/assets/player/${characterType}-${emotion}.png`;
+  };
+  
   // ==================== CALLBACKS (Game → React communication) ====================
   const handleScoreChange = useCallback((newScore) => {
     setScore(newScore);
   }, []);
-  
   const handlePlayerHit = useCallback((hp) => {
     setLives(hp);
     setAvatarState('hurt');
     setTimeout(() => setAvatarState('normal'), 500);
+    // Check if should be scared (1 life only)
+    if (hp === 1) {
+      setTimeout(() => setAvatarState('scared'), 500);
+    }
   }, []);
   
   const handleLevelUp = useCallback((newLevel) => {
@@ -54,12 +69,22 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     setBossWarning(true);
     setTimeout(() => setBossWarning(false), 3000);
     setAvatarState('happy');
-    setTimeout(() => setAvatarState('normal'), 1000);
+    setTimeout(() => {
+      setAvatarState('normal');
+      // Return to scared if still 1 life
+      if (lives === 1) {
+        setAvatarState('scared');
+      }
+    }, 1000);
+  }, [lives]);
+  const handleBossSpawn = useCallback((bossStage) => {
+    // Warning already shown by timer, no need to show again
+    setBossWarning(false);
   }, []);
   
-  const handleBossSpawn = useCallback((bossStage) => {
+  const handleBossWarning = useCallback(() => {
     setBossWarning(true);
-    setTimeout(() => setBossWarning(false), 3000);
+    setTimeout(() => setBossWarning(false), 5000); // Show for full 5 seconds
   }, []);
   
   const handleGameOver = useCallback((finalScoreValue) => {
@@ -79,6 +104,15 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     setGameState('playing');
   }, []);
   
+  // Check if should be scared when lives change
+  useEffect(() => {
+    if (lives === 1 && avatarState !== 'hurt' && avatarState !== 'happy') {
+      setAvatarState('scared');
+    } else if (lives > 1 && avatarState === 'scared') {
+      setAvatarState('normal');
+    }
+  }, [lives, avatarState]);
+  
   // ==================== INITIALIZATION ====================
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -91,6 +125,7 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
       onPlayerHit: handlePlayerHit,
       onLevelUp: handleLevelUp,
       onBossSpawn: handleBossSpawn,
+      onBossWarning: handleBossWarning,
       onGameOver: handleGameOver,
       onGameStart: handleGameStart,
       onGamePause: handleGamePause,
@@ -246,36 +281,30 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                 width: '60px',
                 height: '60px'
               }}>
-                {/* Avatar Face */}
+                {/* Avatar Image */}
+                <img 
+                  src={getAvatarImage()} 
+                  alt="Player Avatar"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    animation: avatarState === 'hurt' ? 'shake 0.5s' : 'none',
+                    filter: avatarState === 'scared' ? 'brightness(1.2)' : 'none'
+                  }}
+                />
+                {/* Glow effect */}
                 <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
                   width: '100%',
                   height: '100%',
-                  borderRadius: '50%',
-                  background: characterColors[characterType],
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: `0 0 15px ${characterColors[characterType]}`,
-                  border: '3px solid rgba(255,255,255,0.5)',
-                  fontSize: '32px',
-                  animation: avatarState === 'hurt' ? 'shake 0.5s' : 'none'
-                }}>
-                  {avatarState === 'normal' && '😊'}
-                  {avatarState === 'happy' && '😄'}
-                  {avatarState === 'hurt' && '😵'}
-                </div>
-                {/* Sparkle effect for happy state */}
-                {avatarState === 'happy' && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '-5px',
-                    right: '-5px',
-                    fontSize: '20px',
-                    animation: 'pulse 0.5s infinite'
-                  }}>
-                    ✨
-                  </div>
-                )}
+                  borderRadius: '10px',
+                  boxShadow: `0 0 20px ${characterColors[characterType]}`,
+                  pointerEvents: 'none',
+                  animation: avatarState === 'scared' ? 'pulse 0.5s infinite' : 'none'
+                }} />
               </div>
               
               {/* Lives Display */}
@@ -368,17 +397,46 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
       {bossWarning && (
         <div style={{
           position: 'absolute',
-          top: '20%',
+          top: '25%',
           left: '50%',
           transform: 'translateX(-50%)',
-          color: '#ff0000',
-          fontSize: '24px', // Reduced to 50% (was 48px)
-          fontWeight: 'bold',
-          textShadow: '0 0 20px #ff0000',
-          animation: 'flash 0.5s infinite',
-          pointerEvents: 'none'
+          textAlign: 'center',
+          pointerEvents: 'none',
+          zIndex: 1000,
+          animation: 'warningPulse 1s ease-in-out infinite'
         }}>
-          ⚠️ BOSS INCOMING ⚠️
+          {/* Warning icon */}
+          <div style={{
+            fontSize: '80px',
+            marginBottom: '10px',
+            animation: 'iconShake 0.5s ease-in-out infinite',
+            filter: 'drop-shadow(0 0 20px rgba(255, 0, 0, 0.8))'
+          }}>
+            ⚠️
+          </div>
+          
+          {/* Main text */}
+          <div style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            color: '#ff3333',
+            textShadow: '0 0 20px rgba(255, 0, 0, 0.8), 0 0 40px rgba(255, 100, 0, 0.6)',
+            letterSpacing: '3px',
+            marginBottom: '8px'
+          }}>
+            BOSS INCOMING
+          </div>
+          
+          {/* Subtitle */}
+          <div style={{
+            fontSize: '18px',
+            color: '#ffaa00',
+            textShadow: '0 0 10px rgba(255, 170, 0, 0.6)',
+            fontWeight: 'normal',
+            letterSpacing: '1px'
+          }}>
+            Prepare for battle!
+          </div>
         </div>
       )}
       
@@ -530,6 +588,29 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
           border: '2px solid #ff4444',
           boxShadow: '0 0 30px rgba(255, 68, 68, 0.5)'
         }}>
+          {/* Defeated Player Avatar */}
+          <div style={{
+            width: '150px',
+            height: '150px',
+            margin: '0 auto 20px auto',
+            borderRadius: '15px',
+            overflow: 'hidden',
+            border: '4px solid #ff4444',
+            boxShadow: '0 0 20px rgba(255, 68, 68, 0.8)',
+            background: 'rgba(255, 68, 68, 0.1)'
+          }}>
+            <img 
+              src={`/assets/player/${characterType}-defeated.png`}
+              alt="Defeated Player"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                animation: 'defeatedPulse 2s ease-in-out infinite'
+              }}
+            />
+          </div>
+          
           <h2 style={{ fontSize: '48px', marginBottom: '20px', textShadow: '0 0 20px #ff4444' }}>
             GAME OVER
           </h2>
@@ -581,6 +662,18 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
         @keyframes flash {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+        @keyframes defeatedPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        @keyframes warningPulse {
+          0%, 100% { transform: translateX(-50%) scale(1); }
+          50% { transform: translateX(-50%) scale(1.05); }
+        }
+        @keyframes iconShake {
+          0%, 100% { transform: rotate(-5deg); }
+          50% { transform: rotate(5deg); }
         }
         @keyframes shake {
           0%, 100% { transform: translateX(0); }

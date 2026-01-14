@@ -223,6 +223,7 @@ class GameEngine {
     // Game state (NO React state here!)
     this.isRunning = false;
     this.isPaused = false;
+    this.isGameOver = false;
     this.lastTime = 0;
     this.accumulator = 0;
     
@@ -264,15 +265,16 @@ class GameEngine {
     this.particlePool = new ObjectPool(() => ({
       x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 60, 
       color: '#fff', size: 3
-    }), 200);
+    }), 300); // Increased pool to handle more particles safely
     
     // Asset loader
     this.assetLoader = new AssetLoader();
     
     // Boss timer: boss spawns after 60 seconds
     this.bossTimer = 0;
-    this.bossSpawnTime = 60000; // 60 seconds in milliseconds
+    this.bossSpawnTime = 5000; // 5 seconds in milliseconds - MUCH FASTER!
     this.gameTime = 0;
+    this.bossWarningShown = false; // Track if warning was shown
     
     // Stars for space warp background
     this.stars = [];
@@ -280,16 +282,17 @@ class GameEngine {
     
     // Spawn timer
     this.lastSpawn = 0;
+    this.spawnTimer = 0;
+    this.spawnTimer = 0;
     this.currentLevel = 1;
     this.enemiesSpawned = 0;
-    this.bossActive = false;
+    this.enemies = [];
     
-    // Bind input handlers
-    this.setupInputHandlers();
+    // CRITICAL: Setup input listeners for keyboard/mouse/touch!
+    this.setupInputListeners();
   }
   
-  setupInputHandlers() {
-    // Keyboard
+  setupInputListeners() {
     window.addEventListener('keydown', (e) => {
       this.keys[e.key.toLowerCase()] = true;
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) {
@@ -431,12 +434,15 @@ class GameEngine {
     this.initStars();
     this.isRunning = false;
     this.isPaused = false;
+    this.isGameOver = false; // CRITICAL: Reset game over flag!
+    this.player.isDead = false; // Reset player death state
   }
   
   start() {
     if (this.isRunning) return;
     this.isRunning = true;
     this.isPaused = false;
+    this.isGameOver = false; // Reset game over flag
     this.lastTime = performance.now();
     this.gameLoop(this.lastTime);
     this.callbacks.onGameStart?.();
@@ -500,6 +506,9 @@ class GameEngine {
   }
   
   handleInput() {
+    // Don't handle input if game is over
+    if (this.isGameOver) return;
+    
     // Keyboard movement
     if (this.keys['arrowleft'] || this.keys['a']) {
       this.player.x -= this.player.speed;
@@ -536,6 +545,9 @@ class GameEngine {
   }
   
   shoot() {
+    // Don't shoot if game is over
+    if (this.isGameOver) return;
+    
     const bullet = this.bulletPool.get();
     bullet.x = this.player.x;
     bullet.y = this.player.y - this.player.height / 2;
@@ -553,7 +565,9 @@ class GameEngine {
     }
     
     // Rocket thrust particle effect
-    if (this.isRunning && !this.isPaused) {
+    // Don't create thrust particles if player is dead or game over
+    if (this.isRunning && !this.isPaused && !this.player.isDead && !this.isGameOver) {
+      // Only create thrust particles while player is alive
       const thrustParticle = this.particlePool.get();
       thrustParticle.x = this.player.x + (Math.random() - 0.5) * 10; // Slight spread
       thrustParticle.y = this.player.y + this.player.height / 2 + 5; // Back of ship
@@ -616,8 +630,81 @@ class GameEngine {
             enemy.y = enemy.targetY;
           }
         } else {
-          // Boss reached position - wobble side to side
-          enemy.x += Math.sin(enemy.time * 0.002) * 2;
+          // Dynamic boss movement pattern
+          const sideSpeed = 3; // Speed for side-to-side movement
+          const margin = 100; // Margin from edges
+          
+          if (enemy.movementPhase === 0) {
+            // Side-to-side movement phase
+            enemy.x += sideSpeed * enemy.movementDirection;
+            
+            // Check if reached edge
+            if (enemy.x >= this.canvas.width - margin) {
+              enemy.movementDirection = -1; // Go left
+              enemy.sideMovementCount++;
+            } else if (enemy.x <= margin) {
+              enemy.movementDirection = 1; // Go right
+              enemy.sideMovementCount++;
+            }
+            
+            // After 2 left + 2 right movements (4 total), go to center
+            if (enemy.sideMovementCount >= 4) {
+              enemy.movementPhase = 1; // Move to center phase
+              enemy.sideMovementCount = 0; // Reset for next cycle
+            }
+          } else if (enemy.movementPhase === 1) {
+            // Move to center
+            const centerX = this.canvas.width / 2;
+            const dx = centerX - enemy.x;
+            if (Math.abs(dx) < 5) {
+              enemy.x = centerX;
+              enemy.movementPhase = 2; // Prepare to dash
+            } else {
+              enemy.x += Math.sign(dx) * sideSpeed;
+            }
+          } else if (enemy.movementPhase === 2) {
+            // Dash forward toward player
+            enemy.isDashing = true;
+            enemy.dashSpeed = 12; // Increased from 8 to 12 - FASTER dash!
+            enemy.y += enemy.dashSpeed;
+            
+            // Dash much further - aim to reach player's Y position!
+            const playerY = this.player.y;
+            const dashTargetY = Math.min(playerY - 100, enemy.targetY + 500); // Go much closer to player
+            if (enemy.y >= dashTargetY) {
+              enemy.movementPhase = 3; // Return phase
+            }
+          } else if (enemy.movementPhase === 3) {
+            if (enemy.y > enemy.targetY) {
+              enemy.y -= enemy.dashSpeed;
+            } else {
+              enemy.y = enemy.targetY;
+              enemy.movementPhase = 0; // Restart cycle
+              enemy.isDashing = false;
+            }
+          }
+        }
+        
+        // Boss damage-based particle effects
+        const hpPercent = enemy.hp / enemy.maxHp;
+        
+        // Smoke effect at 50% HP or below
+        if (hpPercent <= 0.5 && hpPercent > 0.25) {
+          // Create smoke particles occasionally
+          if (Math.random() < 0.1) { // 10% chance per frame - REDUCED from 30% to prevent lag
+            this.createSmokeParticle(enemy.x, enemy.y, enemy.size);
+          }
+        }
+        
+        // Burning effect at 25% HP or below
+        if (hpPercent <= 0.25) {
+          // More burn as HP decreases
+          const burnIntensity = 1 - (hpPercent / 0.25); // 0 to 1 (more at lower HP)
+          const burnChance = 0.05 + (burnIntensity * 0.15); // 5% to 20% chance per frame - REDUCED to prevent lag
+          
+          if (Math.random() < burnChance) {
+            this.createBurningParticle(enemy.x, enemy.y, burnIntensity, enemy.size);
+          }
         }
         
         // Boss attack patterns
@@ -687,10 +774,10 @@ class GameEngine {
           // Guaranteed shot on horizontal entry
           if (enemy.needsImmediateShot) {
             this.enemyShoot(enemy);
-            enemy.needsImmediateShot = false;
-          }
-          enemy.x += enemy.vx;
-          enemy.y += enemy.vy;
+           enemy.needsImmediateShot = false;
+         }
+         enemy.x += enemy.vx;
+         enemy.y += enemy.vy;
         } else {
           // Vertical only
           enemy.y += enemy.speed;
@@ -859,6 +946,10 @@ class GameEngine {
   updateParticles(dt) {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const particle = this.particles[i];
+      // Safety limit: remove oldest particles if too many
+      if (this.particles.length > 250) {
+        this.particles.splice(0, 1);
+      }
       particle.x += particle.vx;
       particle.y += particle.vy;
       particle.vy += 0.1; // gravity
@@ -943,31 +1034,134 @@ class GameEngine {
   playerHit() {
     this.player.hp--;
     this.player.invincible = 2000;
-    this.createExplosion(this.player.x, this.player.y, this.player.color);
+    this.createParticles(this.player.x, this.player.y, this.player.color, 20);
     this.callbacks.onPlayerHit?.(this.player.hp);
     
     if (this.player.hp <= 0) {
-      this.stop();
+      // EPIC explosion on last life!
+      this.createExplosion(this.player.x, this.player.y, this.player.color, 60);
+      
+      // Hide player ship immediately
+      this.player.isDead = true;
+      
+      // Show game over immediately, but keep game running
+      this.callbacks.onGameOver?.(this.player.score);
+      this.isGameOver = true; // Flag to stop player input but keep rendering
     }
   }
   
   enemyHit(enemy, index) {
     enemy.hp--;
     
+    // Boss hit effects - HUGE particles!
+    if (enemy.isBoss) {
+      this.createBossHitExplosion(enemy.x, enemy.y, enemy.size);
+    }
+    
     if (enemy.hp <= 0) {
       // Enemy destroyed
       this.player.score += enemy.points;
-      this.createExplosion(enemy.x, enemy.y, enemy.color);
-      this.enemies.splice(index, 1);
-      this.callbacks.onScoreChange?.(this.player.score);
+      if (enemy.isBoss) {
+        // Boss death: EPIC explosion with debris!
+        this.createBossDeathExplosion(enemy.x, enemy.y, enemy.size);
+        this.enemies.splice(index, 1);
+        this.callbacks.onScoreChange?.(this.player.score);
+      } else if (enemy.canShoot) {
+        // Shooting enemy: explosive fire effect
+        this.createFireExplosion(enemy.x, enemy.y, enemy.color);
+        this.enemies.splice(index, 1);
+        this.callbacks.onScoreChange?.(this.player.score);
+      } else {
+        // Non-shooting enemy: double particle pop effect
+        this.createParticles(enemy.x, enemy.y, enemy.color, 20); // Reduced from 40 to prevent lag
+        this.enemies.splice(index, 1);
+        this.callbacks.onScoreChange?.(this.player.score);
+      }
     } else {
       // Enemy hit but not destroyed
-      this.createParticles(enemy.x, enemy.y, enemy.color, 5);
+      if (enemy.canShoot) {
+        // Shooting enemy hit: small fire burst
+        this.createSmallFireBurst(enemy.x, enemy.y);
+      } else {
+        // Non-shooting enemy hit: double pop effect
+        this.createParticles(enemy.x, enemy.y, enemy.color, 5); // Reduced from 10 to prevent lag
+      }
+    }
+  }
+  createSmallFireBurst(x, y) {
+    // Small fire burst for shooting enemy hit (not destroyed)
+    const fireColors = ['#FF6600', '#FF8C00', '#FFA500', '#FFD700'];
+    for (let i = 0; i < 8; i++) {
+      const particle = this.particlePool.get();
+      particle.x = x;
+      particle.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 3 + 1;
+      particle.vx = Math.cos(angle) * speed;
+      particle.vy = Math.sin(angle) * speed;
+      particle.life = 15;
+      particle.maxLife = 15;
+      particle.color = fireColors[Math.floor(Math.random() * fireColors.length)];
+      particle.size = Math.random() * 3 + 2;
+      this.particles.push(particle);
     }
   }
   
-  createExplosion(x, y, color) {
-    this.createParticles(x, y, color, 20);
+  createSmokeParticle(x, y, bossSize = 0) {
+    // Smoke particle for damaged boss - spread based on boss size
+    const particle = this.particlePool.get();
+    // Spread particles around boss based on its size (default 60px for regular enemies)
+    const spread = Math.max(60, bossSize * 0.8); // Scale with boss size
+    const offsetX = (Math.random() - 0.5) * spread * 2;
+    const offsetY = (Math.random() - 0.5) * spread * 2;
+    particle.x = x + offsetX;
+    particle.y = y + offsetY;
+    
+    // Smoke rises upward
+    particle.vx = (Math.random() - 0.5) * 1; // Slight horizontal drift
+    particle.vy = -Math.random() * 2 - 1; // Upward (negative Y)
+    
+    particle.life = 40 + Math.random() * 20; // 40-60 frames
+    particle.maxLife = particle.life;
+    
+    // Smoke colors: gray to dark gray
+    const smokeColors = ['#666666', '#777777', '#888888', '#999999', '#AAAAAA'];
+    particle.color = smokeColors[Math.floor(Math.random() * smokeColors.length)];
+    particle.size = Math.random() * 10 + 8; // 8-18px - large smoke puffs
+    // Scale up smoke for large boss
+    if (bossSize > 100) particle.size *= 1.5;
+    this.particles.push(particle);
+  }
+  
+  createBurningParticle(x, y, intensity, bossSize = 0) {
+    // Burning particle for heavily damaged boss - spread based on boss size
+    const particle = this.particlePool.get();
+    // Spread particles around boss based on its size
+    const baseSpread = Math.max(60, bossSize * 0.7); // Scale with boss size
+    const spread = baseSpread + (1 - intensity) * 40; // More spread at higher HP
+    const offsetX = (Math.random() - 0.5) * spread;
+    const offsetY = (Math.random() - 0.5) * spread;
+    particle.x = x + offsetX;
+    particle.y = y + offsetY;
+    
+    // Fire rises and spreads
+    particle.vx = (Math.random() - 0.5) * 3; // Horizontal spread
+    particle.vy = -Math.random() * 3 - 2; // Upward (negative Y)
+    
+    // Longer life at higher intensity
+    particle.life = 25 + Math.random() * 15 + (intensity * 20); // 25-60 frames
+    particle.maxLife = particle.life;
+    
+    // Fire colors: orange to yellow to white
+    const fireColors = ['#FF4500', '#FF6600', '#FF8C00', '#FFA500', '#FFD700', '#FFFF00', '#FFFFFF'];
+    // Prefer brighter colors at higher intensity
+    const colorIndex = Math.floor(Math.random() * (fireColors.length - intensity * 3));
+    particle.color = fireColors[Math.max(0, colorIndex)];
+    
+    // Larger at higher intensity, scale for boss
+    particle.size = Math.random() * 6 + 3 + (intensity * 4); // 3-13px
+    if (bossSize > 100) particle.size *= 1.8; // Bigger fire for boss
+    this.particles.push(particle);
   }
   
   createParticles(x, y, color, count) {
@@ -979,8 +1173,121 @@ class GameEngine {
       const speed = Math.random() * 3 + 1;
       particle.vx = Math.cos(angle) * speed;
       particle.vy = Math.sin(angle) * speed;
-      particle.life = particle.maxLife;
+      particle.life = 30 + Math.random() * 20;
+      particle.maxLife = particle.life;
       particle.color = color;
+      particle.size = Math.random() * 3 + 2;
+      this.particles.push(particle);
+    }
+  }
+  
+  createExplosion(x, y, color, count) {
+    // Create a massive explosion for player death
+    const explosionColors = [color, '#FF0000', '#FF4500', '#FF8C00', '#FFD700'];
+    for (let i = 0; i < count; i++) {
+      const particle = this.particlePool.get();
+      particle.x = x;
+      particle.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 8 + 4; // Very fast explosion
+      particle.vx = Math.cos(angle) * speed;
+      particle.vy = Math.sin(angle) * speed;
+      particle.life = 50 + Math.random() * 30; // Long lasting
+      particle.maxLife = particle.life;
+      particle.color = explosionColors[Math.floor(Math.random() * explosionColors.length)];
+      particle.size = Math.random() * 8 + 4; // Large particles
+      this.particles.push(particle);
+    }
+  }
+  
+  createBossHitExplosion(x, y, bossSize = 160) {
+    // HUGE particle burst when boss is hit - spread based on boss size
+    const hitColors = ['#FF00FF', '#FF66FF', '#FFAAFF', '#FFFFFF'];
+    
+    for (let i = 0; i < 15; i++) {
+      const particle = this.particlePool.get();
+      // Spawn particles around boss edge for visibility
+      const angle = (i / 15) * Math.PI * 2;
+      const spawnRadius = bossSize * 0.5; // Half boss size
+      particle.x = x + Math.cos(angle) * spawnRadius;
+      particle.y = y + Math.sin(angle) * spawnRadius * 0.6; // Flatten Y for boss aspect
+      
+      const angle2 = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 6 + 3; // 3-9 speed
+      particle.vx = Math.cos(angle2) * speed;
+      particle.vy = Math.sin(angle2) * speed;
+      particle.life = 20 + Math.random() * 10; // 20-30 frames
+      particle.maxLife = particle.life;
+      // Fire gradient: red -> orange -> gold -> white
+      const fireColors = ['#FF0000', '#FF4500', '#FF6600', '#FF8C00', '#FFD700', '#FFFFFF'];
+      particle.color = fireColors[Math.floor(Math.random() * fireColors.length)];
+      particle.size = Math.random() * 5 + 3; // 3-8px - larger for visibility
+      // Scale up for large boss
+      if (bossSize > 100) particle.size *= 2;
+      
+      this.particles.push(particle);
+    }
+  }
+  
+  createBossDeathExplosion(x, y, bossSize = 160) {
+    // EPIC final explosion with debris! Spread based on boss size
+    const debrisCount = 30; // Reduced from 50 to prevent lag
+    
+    // Phase 1: Massive fire explosion
+    const fireColors = ['#FF0000', '#FF4500', '#FF6600', '#FF8C00', '#FFA500', '#FFD700', '#FFFF00', '#FFFFFF'];
+    for (let i = 0; i < 30; i++) {
+      const particle = this.particlePool.get();
+      particle.x = x + (Math.random() - 0.5) * bossSize * 0.8;
+      particle.y = y + (Math.random() - 0.5) * bossSize * 0.6;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 8 + 4; // Very fast (4-12 speed)
+      particle.vx = Math.cos(angle) * speed;
+      particle.vy = Math.sin(angle) * speed;
+      particle.life = 40 + Math.random() * 20; // 40-60 frames - long lasting!
+      particle.maxLife = particle.life;
+      particle.color = fireColors[Math.floor(Math.random() * fireColors.length)];
+      particle.size = Math.random() * 8 + 4; // 4-12px - HUGE!
+      if (bossSize > 100) particle.size *= 1.2; // Reduced scale
+      this.particles.push(particle);
+    }
+    
+    // Phase 2: Debris chunks (larger, slower pieces)
+    for (let i = 0; i < debrisCount; i++) {
+      const particle = this.particlePool.get();
+      const spreadX = (Math.random() - 0.5) * bossSize;
+      const spreadY = (Math.random() - 0.5) * bossSize * 0.75;
+      particle.x = x + spreadX;
+      particle.y = y + spreadY;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5 + 2; // Debris flies (2-7 speed)
+      particle.vx = Math.cos(angle) * speed;
+      particle.vy = Math.sin(angle) * speed;
+      particle.life = 60 + Math.random() * 30; // 60-90 frames - very long lasting!
+      particle.maxLife = particle.life;
+      // Debris colors: dark pieces
+      const debrisColors = ['#333333', '#444444', '#555555', '#666666', '#777777'];
+      particle.color = debrisColors[Math.floor(Math.random() * debrisColors.length)];
+      particle.size = Math.random() * 15 + 8; // 8-23px - MASSIVE debris chunks!
+      if (bossSize > 100) particle.size *= 1.1; // Reduced scale
+      this.particles.push(particle);
+    }
+  }
+  createFireExplosion(x, y, baseColor) {
+    // Explosive fire effect with multiple colors
+    const fireColors = ['#FF4500', '#FF6600', '#FF8C00', '#FFA500', '#FFD700', '#FFFF00'];
+    
+    for (let i = 0; i < 10; i++) {
+      const particle = this.particlePool.get();
+      particle.x = x;
+      particle.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 5 + 2;
+      particle.vx = Math.cos(angle) * speed;
+      particle.vy = Math.sin(angle) * speed;
+      particle.life = 30 + Math.random() * 15;
+      particle.maxLife = particle.life;
+      particle.color = fireColors[Math.floor(Math.random() * fireColors.length)];
+      particle.size = Math.random() * 5 + 3;
       this.particles.push(particle);
     }
   }
@@ -1154,6 +1461,12 @@ class GameEngine {
       shootRate: 2000, // Slower base fire rate for boss
       isBoss: true,
       hasReachedPosition: false,
+      movementPhase: 0, // 0-3: side-to-side, 4: center, 5: dash
+      movementDirection: 1, // 1 = right, -1 = left
+      sideMovementCount: 0, // Count side movements (0-3 for 2 left + 2 right)
+      dashSpeed: 8, // Speed when dashing
+      isDashing: false,
+      dashTargetY: 0,
       attackPattern: bossStage % 3, // 3 unique patterns per boss stage
       rapidFireTimer: 0,
       image: this.assetLoader.getImage(`boss-${bossStage}`)
@@ -1178,12 +1491,21 @@ class GameEngine {
   }
   
   checkBossSpawn() {
-    // Boss spawns after 60 seconds of gameplay
+    // Boss spawns after 5 seconds of gameplay
     if (this.bossTimer <= 0 && !this.bossActive) {
       this.spawnBoss();
       // Reset timer for next level
       this.bossTimer = this.bossSpawnTime;
       this.gameTime = 0;
+    } else if (this.bossTimer <= 2000 && !this.bossActive && !this.bossWarningShown) {
+      // Show warning when 2 seconds remaining
+      this.bossWarningShown = true;
+      this.callbacks.onBossWarning?.();
+    }
+    
+    // Reset warning flag when boss spawns
+    if (this.bossActive) {
+      this.bossWarningShown = false;
     }
   }
   
@@ -1289,55 +1611,61 @@ class GameEngine {
         const barX = enemy.x - barWidth / 2;
         const barY = enemy.y - (enemy.isBoss ? 100 : 50) - 10; // Adjusted for larger enemies
         
+        // Calculate health percentage, clamped to 0-1 to prevent bar overflow
+        const healthPercent = Math.max(0, Math.min(1, enemy.hp / enemy.maxHp));
+        
         ctx.fillStyle = '#333';
         ctx.fillRect(barX, barY, barWidth, barHeight);
         
         ctx.fillStyle = '#0f0';
-        ctx.fillRect(barX, barY, barWidth * (enemy.hp / enemy.maxHp), barHeight);
+        ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
       }
     });
     
     // Draw player
-    ctx.save();
-    ctx.translate(this.player.x, this.player.y);
-    
-    // Invincibility flash
-    if (this.player.invincible > 0) {
-      ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.5;
+    if (!this.player.isDead) {
+      ctx.save();
+      ctx.translate(this.player.x, this.player.y);
+      
+      // Invincibility flash
+      if (this.player.invincible > 0) {
+        ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.5;
+      }
+      
+      // Player glow
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = this.player.color;
+      
+      // Draw player ship image or fallback to triangle
+      if (this.player.shipImage && this.player.shipImage.complete) {
+        // Maintain aspect ratio: width based on player.width, height is taller (not fat!)
+        const shipWidth = this.player.width * 1.5; // ~75px wide
+        const shipHeight = this.player.height * 1.5; // ~90px tall (taller than wide)
+        ctx.drawImage(
+          this.player.shipImage,
+          -shipWidth / 2,
+          -shipHeight / 2,
+          shipWidth,
+          shipHeight
+        );
+      } else {
+        // Fallback: draw triangle ship
+        ctx.fillStyle = this.player.color;
+        ctx.beginPath();
+        ctx.moveTo(0, -this.player.height / 2);
+        ctx.lineTo(-this.player.width / 2, this.player.height / 2);
+        ctx.lineTo(0, this.player.height / 3);
+        ctx.lineTo(this.player.width / 2, this.player.height / 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
     }
     
-    // Player glow
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = this.player.color;
-    
-    // Draw player ship image or fallback to triangle
-    if (this.player.shipImage && this.player.shipImage.complete) {
-      // Maintain aspect ratio: width based on player.width, height is taller (not fat!)
-      const shipWidth = this.player.width * 1.5; // ~75px wide
-      const shipHeight = this.player.height * 1.5; // ~90px tall (taller than wide)
-      ctx.drawImage(
-        this.player.shipImage,
-        -shipWidth / 2,
-        -shipHeight / 2,
-        shipWidth,
-        shipHeight
-      );
-    } else {
-      // Fallback: draw triangle ship
-      ctx.fillStyle = this.player.color;
-      ctx.beginPath();
-      ctx.moveTo(0, -this.player.height / 2);
-      ctx.lineTo(-this.player.width / 2, this.player.height / 2);
-      ctx.lineTo(0, this.player.height / 3);
-      ctx.lineTo(this.player.width / 2, this.player.height / 2);
-      ctx.closePath();
-      ctx.fill();
-    }
-    
-    ctx.restore();
   }
   
   initStars() {
+    // Initialize starfield for space background
     this.stars = [];
     for (let i = 0; i < 150; i++) {
       this.stars.push({
