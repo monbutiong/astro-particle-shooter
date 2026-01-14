@@ -1,26 +1,18 @@
 /**
  * Space Snake Game - React UI Component
- * 
- * This component handles ONLY React UI concerns:
- * - Menus
- * - HUD (Heads Up Display)
- * - Pause/Game Over screens
- * - Event handling for UI interactions
- * 
- * ALL gameplay logic is in the separate GameEngine module
- * following "THE RIGHT Techniques for Games in React"
+ * Complete Menu with Stats, Profile & Evolution
  */
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import GameEngine from '../engine/GameEngine';
 
 const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' }) => {
-  // ==================== REFS (No re-renders!) ====================
+  // ==================== REFS ====================
   const canvasRef = useRef(null);
   const gameEngineRef = useRef(null);
   
-  // ==================== REACT STATE (UI only) ====================
-  const [gameState, setGameState] = useState('menu'); // menu, loading, playing, paused, gameover
+  // ==================== STATE ====================
+  const [gameState, setGameState] = useState('menu');
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [level, setLevel] = useState(1);
@@ -28,7 +20,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [bossWarning, setBossWarning] = useState(false);
   const [bossTimer, setBossTimer] = useState(60);
-  const [avatarState, setAvatarState] = useState('normal'); // normal, happy, hurt
+  const [avatarState, setAvatarState] = useState('normal');
+  const [highScore, setHighScore] = useState(0);
+  const [gamesPlayed, setGamesPlayed] = useState(0);
   
   // Character colors
   const characterColors = {
@@ -38,171 +32,97 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     yellow: '#ffff44'
   };
   
-  // Get avatar image based on character type and emotion
-  const getAvatarImage = () => {
-    const emotionMap = {
-      normal: 'ready',
-      happy: 'power-up',
-      hurt: 'cry',
-      scared: 'scared'
-    };
-    const emotion = emotionMap[avatarState] || 'ready';
-    return `/assets/player/${characterType}-${emotion}.png`;
-  };
-  
-  // ==================== CALLBACKS (Game → React communication) ====================
-  const handleScoreChange = useCallback((newScore) => {
-    setScore(newScore);
-  }, []);
-  const handlePlayerHit = useCallback((hp) => {
-    setLives(hp);
-    setAvatarState('hurt');
-    setTimeout(() => setAvatarState('normal'), 500);
-    // Check if should be scared (1 life only)
-    if (hp === 1) {
-      setTimeout(() => setAvatarState('scared'), 500);
-    }
-  }, []);
-  
-  const handleLevelUp = useCallback((newLevel) => {
-    setLevel(newLevel);
-    setBossWarning(true);
-    setTimeout(() => setBossWarning(false), 3000);
-    setAvatarState('happy');
-    setTimeout(() => {
-      setAvatarState('normal');
-      // Return to scared if still 1 life
-      if (lives === 1) {
-        setAvatarState('scared');
-      }
-    }, 1000);
-  }, [lives]);
-  const handleBossSpawn = useCallback((bossStage) => {
-    // Warning already shown by timer, no need to show again
-    setBossWarning(false);
-  }, []);
-  
-  const handleBossWarning = useCallback(() => {
-    setBossWarning(true);
-    setTimeout(() => setBossWarning(false), 5000); // Show for full 5 seconds
-  }, []);
-  
-  const handleGameOver = useCallback((finalScoreValue) => {
-    setFinalScore(finalScoreValue);
-    setGameState('gameover');
-  }, []);
-  
-  const handleGameStart = useCallback(() => {
-    setGameState('playing');
-  }, []);
-  
-  const handleGamePause = useCallback(() => {
-    setGameState('paused');
-  }, []);
-  
-  const handleGameResume = useCallback(() => {
-    setGameState('playing');
-  }, []);
-  
-  // Check if should be scared when lives change
-  useEffect(() => {
-    if (lives === 1 && avatarState !== 'hurt' && avatarState !== 'happy') {
-      setAvatarState('scared');
-    } else if (lives > 1 && avatarState === 'scared') {
-      setAvatarState('normal');
-    }
-  }, [lives, avatarState]);
-  
-  // ==================== INITIALIZATION ====================
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    
-    const canvas = canvasRef.current;
-    
-    // Initialize game engine
-    const engine = new GameEngine(canvas, {
-      onScoreChange: handleScoreChange,
-      onPlayerHit: handlePlayerHit,
-      onLevelUp: handleLevelUp,
-      onBossSpawn: handleBossSpawn,
-      onBossWarning: handleBossWarning,
-      onGameOver: handleGameOver,
-      onGameStart: handleGameStart,
-      onGamePause: handleGamePause,
-      onGameResume: handleGameResume
-    });
-    
-    gameEngineRef.current = engine;
-    
-    // Set player color
-    engine.player.color = characterColors[characterType] || characterColors.blue;
-    
-    // Load player ship image
-    engine.loadPlayerShip(characterType);
-    
-    // Preload assets
-    const loadAssets = async () => {
-      setGameState('loading');
-      engine.assetLoader.onProgress = (loaded, total) => {
-        setLoadingProgress(Math.floor((loaded / total) * 100));
-      };
-      
-      await engine.preloadAssets();
-      setGameState('menu');
-    };
-    
-    loadAssets();
-    
-    // Boss timer update loop
-    const bossTimerInterval = setInterval(() => {
-      if (gameEngineRef.current && gameState === 'playing') {
-        const timer = gameEngineRef.current.getBossTimer();
-        setBossTimer(timer);
-      }
-    }, 100);
-    
-    // Cleanup
-    return () => {
-      clearInterval(bossTimerInterval);
-      if (engine.isRunning) {
-        engine.stop();
-      }
-    };
-  }, [characterType]);
-  
-  // ==================== GAME CONTROLS ====================
+  // ==================== GAME CONTROL ====================
   const startGame = useCallback(() => {
-    if (gameEngineRef.current) {
-      gameEngineRef.current.reset();
-      gameEngineRef.current.start();
-      setScore(0);
-      setLives(3);
-      setLevel(1);
-    }
+    setGameState('loading');
+    setLoadingProgress(0);
+    setGamesPlayed(prev => prev + 1);
+    
+    const loadInterval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(loadInterval);
+          setGameState('playing');
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 100);
   }, []);
   
   const pauseGame = useCallback(() => {
     if (gameEngineRef.current) {
       gameEngineRef.current.pause();
+      setGameState('paused');
     }
   }, []);
   
   const resumeGame = useCallback(() => {
     if (gameEngineRef.current) {
       gameEngineRef.current.resume();
+      setGameState('playing');
     }
   }, []);
   
   const quitGame = useCallback(() => {
     if (gameEngineRef.current) {
       gameEngineRef.current.stop();
+      gameEngineRef.current = null;
     }
-    onMenuReturn();
-  }, [onMenuReturn]);
+    setGameState('menu');
+    setScore(0);
+    setLives(3);
+    setLevel(1);
+    setAvatarState('normal');
+  }, []);
   
-  // Keyboard shortcuts
+  // ==================== CALLBACKS ====================
+  const gameCallbacks = {
+    onScoreUpdate: (newScore) => {
+      setScore(newScore);
+      if (newScore > highScore) {
+        setHighScore(newScore);
+      }
+    },
+    onLevelUp: (newLevel) => {
+      setLevel(newLevel);
+    },
+    onGameOver: (finalScoreValue) => {
+      setFinalScore(finalScoreValue);
+      if (finalScoreValue > highScore) {
+        setHighScore(finalScoreValue);
+      }
+      setGameState('gameover');
+    },
+    onLivesUpdate: (newLives) => {
+      setLives(newLives);
+    },
+    onBossWarning: (warning) => {
+      setBossWarning(warning);
+    },
+    onBossTimerUpdate: (timer) => {
+      setBossTimer(timer);
+    }
+  };
+  
+  // ==================== CANVAS SETUP ====================
   useEffect(() => {
-    const handleKeyPress = (e) => {
+    if (gameState === 'playing' && canvasRef.current && !gameEngineRef.current) {
+      gameEngineRef.current = new GameEngine(canvasRef.current, gameCallbacks);
+      gameEngineRef.current.start();
+    }
+    
+    return () => {
+      if (gameEngineRef.current && gameState !== 'playing') {
+        gameEngineRef.current.stop();
+        gameEngineRef.current = null;
+      }
+    };
+  }, [gameState, gameCallbacks]);
+  
+  // ==================== KEYBOARD ====================
+  useEffect(() => {
+    const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         if (gameState === 'playing') {
           pauseGame();
@@ -210,232 +130,93 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
           resumeGame();
         }
       }
-      if (e.key === ' ' || e.key === 'Enter') {
-        if (gameState === 'menu') {
-          startGame();
-        } else if (gameState === 'gameover') {
-          startGame();
-        }
-      }
     };
     
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [gameState, startGame, pauseGame, resumeGame]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, pauseGame, resumeGame]);
   
-  // ==================== RENDER ====================
   return (
-    <div className="game-container" style={{
+    <div style={{
       position: 'relative',
-      width: '100vw',
+      width: '100%',
       height: '100vh',
       background: '#000',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      fontFamily: 'Arial, sans-serif',
-      userSelect: 'none',
-      WebkitUserSelect: 'none',
-      touchAction: 'none'
+      overflow: 'hidden'
     }}>
-      {/* Canvas */}
+      {/* Game Canvas */}
       <canvas
         ref={canvasRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
         style={{
-          width: '100vw',
-          height: '100vh',
-          imageRendering: 'pixelated'
+          display: gameState === 'playing' || gameState === 'paused' ? 'block' : 'none',
+          width: '100%',
+          height: '100%',
+          background: '#000'
         }}
       />
       
-      {/* HUD - Only during gameplay */}
+      {/* HUD */}
       {gameState === 'playing' && (
-        <>
-          {/* Top HUD Bar */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '80px',
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 20px',
-            boxSizing: 'border-box',
-            pointerEvents: 'none'
-          }}>
-            
-            {/* Left: Lives & Avatar */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '15px'
-            }}>
-              {/* Player Character Avatar with Emotions */}
-              <div style={{
-                position: 'relative',
-                width: '60px',
-                height: '60px'
-              }}>
-                {/* Avatar Image */}
-                <img 
-                  src={getAvatarImage()} 
-                  alt="Player Avatar"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    animation: avatarState === 'hurt' ? 'shake 0.5s' : 'none',
-                    filter: avatarState === 'scared' ? 'brightness(1.2)' : 'none'
-                  }}
-                />
-                {/* Glow effect */}
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '10px',
-                  boxShadow: `0 0 20px ${characterColors[characterType]}`,
-                  pointerEvents: 'none',
-                  animation: avatarState === 'scared' ? 'pulse 0.5s infinite' : 'none'
-                }} />
-              </div>
-              
-              {/* Lives Display */}
-              <div style={{
-                color: '#fff',
-                height: '60px',
-                borderRadius: '10px',
-                background: `linear-gradient(135deg, ${characterColors[characterType]}, ${characterColors[characterType]}88)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '35px',
-                border: `3px solid ${characterColors[characterType]}`,
-                boxShadow: `0 0 15px ${characterColors[characterType]}88`,
-                transition: 'transform 0.2s',
-                transform: avatarState === 'hurt' ? 'scale(0.9)' : avatarState === 'happy' ? 'scale(1.1)' : 'scale(1)'
-              }}>
-                {avatarState === 'hurt' ? '😵' : avatarState === 'happy' ? '😄' : '🚀'}
-              </div>
-              
-              {/* Player Name & Lives */}
-              <div style={{ color: '#fff' }}>
-                <div style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                  marginBottom: '2px'
-                }}>
-                  {playerName || 'Player'}
-                </div>
-                <div style={{
-                  fontSize: '16px',
-                  color: characterColors[characterType],
-                  textShadow: '0 0 10px ' + characterColors[characterType]
-                }}>
-                  ❤️ x {lives}
-                </div>
-              </div>
-            </div>
-            
-            {/* Center: Score & Level */}
-            <div style={{
-              textAlign: 'center',
-              color: '#fff'
-            }}>
-              <div style={{
-                fontSize: '28px',
-                fontWeight: 'bold',
-                textShadow: '0 0 20px ' + characterColors[characterType],
-                marginBottom: '2px'
-              }}>
-                {score.toLocaleString()}
-              </div>
-              <div style={{
-                fontSize: '14px',
-                opacity: 0.8,
-                textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-              }}>
-                LEVEL {level}
-              </div>
-            </div>
-            
-            {/* Right: Boss Timer */}
-            <div style={{
-              textAlign: 'right',
-              color: '#fff'
-            }}>
-              <div style={{
-                fontSize: '14px',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                marginBottom: '2px',
-                opacity: 0.8
-              }}>
-                BOSS IN:
-              </div>
-              <div style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: bossTimer <= 10 ? '#ff4444' : '#44ff44',
-                textShadow: `0 0 20px ${bossTimer <= 10 ? '#ff4444' : '#44ff44'}`
-              }}>
-                {bossTimer}s
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-      
-      {/* Boss Warning */}
-      {bossWarning && (
         <div style={{
           position: 'absolute',
-          top: '25%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          textAlign: 'center',
+          top: 0,
+          left: 0,
+          right: 0,
+          padding: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
           pointerEvents: 'none',
-          zIndex: 1000,
-          animation: 'warningPulse 1s ease-in-out infinite'
+          zIndex: 10
         }}>
-          {/* Warning icon */}
-          <div style={{
-            fontSize: '80px',
-            marginBottom: '10px',
-            animation: 'iconShake 0.5s ease-in-out infinite',
-            filter: 'drop-shadow(0 0 20px rgba(255, 0, 0, 0.8))'
-          }}>
-            ⚠️
+          <div style={{ color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
+              Score: {score.toLocaleString()}
+            </div>
+            <div style={{ fontSize: '18px' }}>
+              Lives: {'❤️'.repeat(Math.max(0, lives))}
+            </div>
+            <div style={{ fontSize: '16px', marginTop: '5px' }}>
+              Level: {level}
+            </div>
           </div>
           
-          {/* Main text */}
-          <div style={{
-            fontSize: '36px',
-            fontWeight: 'bold',
-            color: '#ff3333',
-            textShadow: '0 0 20px rgba(255, 0, 0, 0.8), 0 0 40px rgba(255, 100, 0, 0.6)',
-            letterSpacing: '3px',
-            marginBottom: '8px'
-          }}>
-            BOSS INCOMING
-          </div>
-          
-          {/* Subtitle */}
-          <div style={{
-            fontSize: '18px',
-            color: '#ffaa00',
-            textShadow: '0 0 10px rgba(255, 170, 0, 0.6)',
-            fontWeight: 'normal',
-            letterSpacing: '1px'
-          }}>
-            Prepare for battle!
+          <div style={{ textAlign: 'right' }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              margin: '0 auto 10px auto',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              border: '2px solid #4488ff',
+              boxShadow: '0 0 15px rgba(68, 136, 255, 0.6)'
+            }}>
+              <img
+                src={`/assets/player/${characterType}-ready.png`}
+                alt="Avatar"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+            
+            {bossWarning && (
+              <div style={{
+                background: 'rgba(255, 68, 68, 0.9)',
+                padding: '10px 20px',
+                borderRadius: '10px',
+                animation: 'warningPulse 1s ease-in-out infinite'
+              }}>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
+                  ⚠️ BOSS INCOMING!
+                </div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffcc00' }}>
+                  {bossTimer}s
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -470,51 +251,548 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
         </div>
       )}
       
-      {/* Menu Screen */}
+      {/* Menu Screen - Updated with Stats & Power-Up Image */}
       {gameState === 'menu' && (
         <div style={{
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          textAlign: 'center',
-          color: '#fff',
-          background: 'rgba(0, 0, 0, 0.8)',
-          padding: '40px',
-          borderRadius: '20px',
-          border: '2px solid #4488ff',
-          boxShadow: '0 0 30px rgba(68, 136, 255, 0.5)'
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.85)), url(/assets/images/ready-background.png)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          padding: '20px'
         }}>
-          <h1 style={{ fontSize: '48px', marginBottom: '20px', textShadow: '0 0 20px #4488ff' }}>
-            SPACE SNAKE
-          </h1>
-          <p style={{ fontSize: '24px', marginBottom: '30px' }}>
-            Player: {playerName}
-          </p>
-          <button
-            onClick={startGame}
-            style={{
-              padding: '15px 40px',
-              fontSize: '24px',
-              background: 'linear-gradient(135deg, #4488ff, #44ff88)',
-              border: 'none',
-              borderRadius: '10px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: '0 5px 15px rgba(68, 136, 255, 0.4)',
-              transition: 'transform 0.2s',
-              userSelect: 'none'
-            }}
-            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-          >
-            START GAME
-          </button>
-          <div style={{ marginTop: '30px', fontSize: '16px', opacity: 0.8 }}>
-            <p>Arrow Keys / WASD - Move</p>
-            <p>Mouse Click / Tap - Shoot</p>
-            <p>ESC - Pause</p>
+          <div style={{
+            display: 'flex',
+            gap: '40px',
+            maxWidth: '1200px',
+            width: '100%',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            alignItems: 'flex-start'
+          }}>
+            {/* Left: Player Profile & Stats */}
+            <div style={{
+              minWidth: '280px',
+              maxWidth: '280px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
+              {/* Profile Card - 180px avatar */}
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.7)',
+                borderRadius: '20px',
+                padding: '25px 20px',
+                border: '2px solid',
+                borderImage: `linear-gradient(135deg, ${characterColors[characterType] || '#4488ff'}, ${characterColors[characterType] || '#44ff88'}, #ffcc00) 1`,
+                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+                textAlign: 'center'
+              }}>
+                {/* Character Avatar - 180px */}
+                <div style={{
+                  width: '180px',
+                  height: '180px',
+                  margin: '0 auto 15px auto',
+                  borderRadius: '15px',
+                  overflow: 'hidden',
+                  border: '4px solid',
+                  borderColor: characterColors[characterType] || '#4488ff',
+                  boxShadow: `0 0 30px ${(characterColors[characterType] || '#4488ff')}80, 0 0 60px ${(characterColors[characterType] || '#4488ff')}40`,
+                  position: 'relative',
+                  background: 'rgba(0, 0, 0, 0.3)'
+                }}>
+                  <img
+                    src={`/assets/player/${characterType}-ready.png`}
+                    alt={`${characterType} Pilot`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: -100,
+                    width: '50%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+                    animation: 'profileShine 2s ease-in-out infinite'
+                  }} />
+                </div>
+                
+                {/* Character Name */}
+                <h3 style={{
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  margin: '0 0 5px 0',
+                  color: characterColors[characterType] || '#4488ff',
+                  textTransform: 'capitalize',
+                  textShadow: `0 0 15px ${characterColors[characterType] || '#4488ff'}`
+                }}>
+                  {characterType}
+                </h3>
+                
+                {/* Badge */}
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  padding: '6px 15px',
+                  background: `linear-gradient(135deg, ${characterColors[characterType] || '#4488ff'}, ${characterColors[characterType] || '#44ff88'})`,
+                  borderRadius: '20px',
+                  display: 'inline-block',
+                  color: '#fff',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  boxShadow: `0 5px 15px ${(characterColors[characterType] || '#4488ff')}60`,
+                  marginBottom: '15px'
+                }}>
+                  ⭐ READY FOR ACTION
+                </div>
+              </div>
+              
+              {/* Power-Up Card - With Image */}
+              <div style={{
+                width: '100%',
+                background: 'rgba(255, 204, 0, 0.1)',
+                borderRadius: '15px',
+                padding: '15px',
+                border: '2px solid rgba(255, 204, 0, 0.3)',
+                boxShadow: '0 5px 15px rgba(255, 204, 0, 0.2)',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  color: '#ffcc00',
+                  marginBottom: '8px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px'
+                }}>
+                  🚀 POWER-UP SYSTEM
+                </div>
+                <div style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginTop: '10px'
+                }}>
+                  <img
+                    src="/assets/power-ups/level-up-spaceship.png"
+                    alt="Power-Up Evolution"
+                    style={{
+                      width: '200px',
+                      height: 'auto',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Player Stats Card - From Screenshot */}
+              <div style={{
+                width: '100%',
+                background: 'rgba(68, 136, 255, 0.15)',
+                borderRadius: '15px',
+                padding: '15px',
+                border: '2px solid rgba(68, 136, 255, 0.4)',
+                boxShadow: '0 5px 15px rgba(68, 136, 255, 0.3)',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#4488ff',
+                  marginBottom: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  textShadow: '0 0 10px rgba(68, 136, 255, 0.6)'
+                }}>
+                  📊 Your Stats
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Score</span>
+                    <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffcc00', textShadow: '0 0 10px rgba(255, 204, 0, 0.6)' }}>
+                      {score.toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '5px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Best</span>
+                    <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#44ff88', textShadow: '0 0 10px rgba(68, 255, 136, 0.6)' }}>
+                      {highScore.toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Games</span>
+                    <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#ff44ff', textShadow: '0 0 10px rgba(255, 68, 255, 0.6)' }}>
+                      {gamesPlayed}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Change Character Button */}
+              <button
+                onClick={() => onMenuReturn && onMenuReturn()}
+                style={{
+                  padding: '12px 20px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  background: 'linear-gradient(135deg, #ff44ff, #ff8800)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  boxShadow: '0 5px 15px rgba(255, 68, 255, 0.4)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px) scale(1.05)';
+                  e.target.style.boxShadow = '0 8px 20px rgba(255, 68, 255, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0) scale(1)';
+                  e.target.style.boxShadow = '0 5px 15px rgba(255, 68, 255, 0.4)';
+                }}
+              >
+                🎨 Change Character
+              </button>
+            </div>
+            
+            {/* Right: Ship Evolution Grid */}
+            <div style={{
+              flex: 1,
+              minWidth: '400px',
+              maxWidth: '600px'
+            }}>
+              <div style={{
+                fontSize: '22px',
+                fontWeight: 'bold',
+                marginBottom: '15px',
+                color: '#fff',
+                textShadow: '0 0 15px rgba(255, 255, 255, 0.5)',
+                textAlign: 'center'
+              }}>
+                ⚙️ Ship Evolution
+              </div>
+              
+              {/* 2x2 Evolution Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '15px'
+              }}>
+                {/* Evolution Stage 0 - Basic */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  background: 'rgba(136, 136, 136, 0.15)',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(136, 136, 136, 0.3)',
+                  animation: 'float 3s ease-in-out infinite'
+                }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '10px',
+                    background: 'rgba(136, 136, 136, 0.15)',
+                    border: '2px solid #888',
+                    boxShadow: '0 0 15px rgba(136, 136, 136, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    <img
+                      src={`/assets/player/${characterType}-ship.fw.png`}
+                      alt="Basic Ship"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      color: '#aaa',
+                      marginBottom: '2px',
+                      textShadow: '0 0 8px rgba(136, 136, 136, 0.6)'
+                    }}>
+                      LEVEL 0
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: '#888',
+                      fontStyle: 'italic'
+                    }}>
+                      Basic Fighter
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: '18px',
+                    color: '#ffcc00'
+                  }}>
+                    🔴
+                  </div>
+                </div>
+                
+                {/* Evolution Stage 1 - Enhanced */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  background: 'rgba(68, 255, 136, 0.1)',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(68, 255, 136, 0.3)',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '0.5s'
+                }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '10px',
+                    background: 'rgba(68, 255, 136, 0.15)',
+                    border: '2px solid #44ff88',
+                    boxShadow: '0 0 15px rgba(68, 255, 136, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    <img
+                      src={`/assets/player/${characterType}-level-1.fw.png`}
+                      alt="Enhanced Ship"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      color: '#44ff88',
+                      marginBottom: '2px',
+                      textShadow: '0 0 8px rgba(68, 255, 136, 0.6)'
+                    }}>
+                      LEVEL 1
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: '#888',
+                      fontStyle: 'italic'
+                    }}>
+                      Enhanced
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: '18px',
+                    color: '#ffcc00'
+                  }}>
+                    🔴🔴
+                  </div>
+                </div>
+                
+                {/* Evolution Stage 2 - Advanced */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  background: 'rgba(255, 204, 0, 0.1)',
+                  borderRadius: '12px',
+                  border: '2px solid rgba(255, 204, 0, 0.3)',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '1s'
+                }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 204, 0, 0.15)',
+                    border: '2px solid #ffcc00',
+                    boxShadow: '0 0 15px rgba(255, 204, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
+                    <img
+                      src={`/assets/player/${characterType}-level-2.fw.png`}
+                      alt="Advanced Ship"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      color: '#ffcc00',
+                      marginBottom: '2px',
+                      textShadow: '0 0 8px rgba(255, 204, 0, 0.6)'
+                    }}>
+                      LEVEL 2
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: '#888',
+                      fontStyle: 'italic'
+                    }}>
+                      Advanced
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: '18px',
+                    color: '#ffcc00'
+                  }}>
+                    🔴🔴🔴
+                  </div>
+                </div>
+                
+                {/* Evolution Stage 3 - Ultimate */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px',
+                  background: 'rgba(255, 68, 255, 0.15)',
+                  borderRadius: '12px',
+                  border: '3px solid rgba(255, 68, 255, 0.5)',
+                  animation: 'float 3s ease-in-out infinite',
+                  animationDelay: '1.5s',
+                  boxShadow: '0 0 25px rgba(255, 68, 255, 0.6)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(90deg, transparent, rgba(255, 68, 255, 0.2), transparent)',
+                    animation: 'level3Glow 2s ease-in-out infinite',
+                    pointerEvents: 'none'
+                  }} />
+                  
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 68, 255, 0.2)',
+                    border: '3px solid #ff44ff',
+                    boxShadow: '0 0 25px rgba(255, 68, 255, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    position: 'relative',
+                    animation: 'level3Pulse 1.5s ease-in-out infinite'
+                  }}>
+                    <img
+                      src={`/assets/player/${characterType}-level-3.fw.png`}
+                      alt="Ultimate Ship"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'left', position: 'relative' }}>
+                    <div style={{
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      color: '#ff44ff',
+                      marginBottom: '2px',
+                      textShadow: '0 0 10px rgba(255, 68, 255, 0.8)'
+                    }}>
+                      LEVEL 3
+                    </div>
+                    <div style={{
+                      fontSize: '11px',
+                      color: '#aaa',
+                      fontStyle: 'italic'
+                    }}>
+                      Ultimate
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: '18px',
+                    color: '#ffcc00',
+                    animation: 'pulse 1s ease-in-out infinite'
+                  }}>
+                    🔴🔴🔴🔴
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Start Button - Bottom */}
+          <div style={{
+            position: 'absolute',
+            bottom: '30px',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}>
+            <button
+              onClick={startGame}
+              style={{
+                padding: '20px 60px',
+                fontSize: '28px',
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #4488ff 0%, #44ff88 50%, #ffcc00 100%)',
+                border: 'none',
+                borderRadius: '18px',
+                color: '#fff',
+                cursor: 'pointer',
+                boxShadow: '0 15px 40px rgba(68, 136, 255, 0.6)',
+                transition: 'all 0.3s ease',
+                textTransform: 'uppercase',
+                letterSpacing: '4px',
+                position: 'relative',
+                overflow: 'hidden',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-5px) scale(1.08)';
+                e.target.style.boxShadow = '0 20px 50px rgba(68, 136, 255, 0.8)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0) scale(1)';
+                e.target.style.boxShadow = '0 15px 40px rgba(68, 136, 255, 0.6)';
+              }}
+            >
+              🚀 LAUNCH MISSION
+            </button>
           </div>
         </div>
       )}
@@ -588,7 +866,6 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
           border: '2px solid #ff4444',
           boxShadow: '0 0 30px rgba(255, 68, 68, 0.5)'
         }}>
-          {/* Defeated Player Avatar */}
           <div style={{
             width: '150px',
             height: '150px',
@@ -657,38 +934,39 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
         </div>
       )}
       
-      {/* Inline keyframes for animations */}
+      {/* Animations */}
       <style>{`
-        @keyframes flash {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes defeatedPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        @keyframes warningPulse {
-          0%, 100% { transform: translateX(-50%) scale(1); }
-          50% { transform: translateX(-50%) scale(1.05); }
-        }
-        @keyframes iconShake {
-          0%, 100% { transform: rotate(-5deg); }
-          50% { transform: rotate(5deg); }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
         }
         @keyframes pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.2); opacity: 0.8; }
         }
+        @keyframes level3Pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes level3Glow {
+          0%, 100% { box-shadow: 0 0 30px rgba(255, 68, 255, 0.8); }
+          50% { box-shadow: 0 0 50px rgba(255, 68, 255, 1), 0 0 80px rgba(255, 68, 255, 0.6); }
+        }
+        @keyframes profileShine {
+          0% { left: -100%; }
+          50%, 100% { left: 200%; }
+        }
+        @keyframes defeatedPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.85; }
+        }
+        @keyframes warningPulse {
+          0%, 100% { transform: translateX(-50%) scale(1); }
+          50% { transform: translateX(-50%) scale(1.05); }
+        }
       `}</style>
-      </div>
-    );
-  };
+    </div>
+  );
+};
 
 export default SpaceSnakeGameNew;
-
-
