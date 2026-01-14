@@ -1,4 +1,70 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+// Player configuration with colors and character positions
+const playerConfigs = {
+    red: {
+        id: 'red',
+        name: 'Red Fury',
+        color: '#FF4444',
+        glowColor: 'rgba(255, 68, 68, 0.6)',
+        emoji: '🔴',
+        shipType: 'speed',
+        shipImage: '/src/assets/player/red-ship.fw.png',
+        avatarImage: '/src/assets/player/red-ready.png',
+    },
+    blue: {
+        id: 'blue',
+        name: 'Blue Thunder',
+        color: '#4488FF',
+        glowColor: 'rgba(68, 136, 255, 0.6)',
+        emoji: '🔵',
+        shipType: 'balanced',
+        shipImage: '/src/assets/player/blue-ship.fw.png',
+        avatarImage: '/src/assets/player/blue-ready.png',
+    },
+    yellow: {
+        id: 'yellow',
+        name: 'Yellow Flash',
+        color: '#FFDD44',
+        glowColor: 'rgba(255, 221, 68, 0.6)',
+        emoji: '🟡',
+        shipType: 'heavy',
+        shipImage: '/src/assets/player/yellow-ship.fw.png',
+        avatarImage: '/src/assets/player/yellow-ready.png',
+    },
+    pink: {
+        id: 'pink',
+        name: 'Pink Lightning',
+        color: '#FF44DD',
+        glowColor: 'rgba(255, 68, 221, 0.6)',
+        emoji: '🩷',
+        shipType: 'agile',
+        shipImage: '/src/assets/player/pink-ship.fw.png',
+        avatarImage: '/src/assets/player/pink-ready.png',
+    },
+};
+
+
+
+// Helper function to lighten a hex color
+const lightenColor = (color, percent) => {
+  const num = parseInt(color.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, (num >> 16) + amt);
+  const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+  const B = Math.min(255, (num & 0x0000FF) + amt);
+  return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+};
+
+// Helper function to darken a hex color
+const darkenColor = (color, percent) => {
+  const num = parseInt(color.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, (num >> 16) - amt);
+  const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
+  const B = Math.max(0, (num & 0x0000FF) - amt);
+  return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+};
+
 
 // Sound Manager
 const useSoundManager = () => {
@@ -33,35 +99,32 @@ const useSoundManager = () => {
     if (Object.keys(soundsRef.current).length > 0) return; // Already loaded
 
     const soundPaths = {
-      // Shooting sounds
-      shoot: '/src/assets/audio/fire.wav',
-      shootNormal: '/src/assets/audio/fire-normal.wav',
-      
-      // Enemy sounds
-      enemyHit: '/src/assets/audio/enemy-hit.wav',
-      enemyDestroy: '/src/assets/audio/fireworks.wav',
-      pinHit: '/src/assets/audio/pin_hit.wav',
-      slotHit: '/src/assets/audio/slot_hit.wav',
-      
-      // Boss sounds
-      bossDead: '/src/assets/audio/boss dead.wav',
-      
-      // Power-up sounds
-      powerUp: '/src/assets/audio/power-ups.wav',
-      powerUpSpecial: '/src/assets/audio/power-ups-1.wav',
-      jackpot: '/src/assets/audio/jackpot.wav',
-      
-      // Game state sounds
-      uiClick: '/src/assets/audio/ui_click.wav',
-      gameOver: '/src/assets/audio/game_over.wav',
-      newRecord: '/src/assets/audio/new_record.wav',
-      winFireworks: '/src/assets/audio/win_fireworks.wav',
-      
-      // Background music
-      bgmLevel1: '/src/assets/audio/background-sound-1-to-10.mp3',
-      bgmLevel2: '/src/assets/audio/background-sound-11-to-20.mp3',
-      bgmLevel3: '/src/assets/audio/background-sound-21-to-30.mp3',
-      bgmLevel4: '/src/assets/audio/background-sound-31-to-all.mp3',
+     // Shooting sounds
+     shoot: '/audio/fire.wav',
+     shootNormal: '/audio/fire-normal.wav',
+     
+     // Enemy sounds
+     enemyHit: '/audio/enemy-hit.wav',
+     enemyDestroy: '/audio/fireworks.wav',
+     
+     // Boss sounds
+     bossDead: '/audio/boss dead.wav',
+     
+     // Power-up sounds
+     powerUp: '/audio/fireworks.wav',
+     powerUpSpecial: '/audio/fireworks.wav',
+     jackpot: '/audio/fireworks.wav',
+     
+     // Game state sounds
+     gameOver: '/audio/game-over.wav',
+     newRecord: '/audio/fireworks.wav',
+     winFireworks: '/audio/fireworks.wav',
+     
+     // Background music
+      bgmLevel1: '/audio/background-sound-1-to-10.mp3',
+      bgmLevel2: '/audio/background-sound-11-to-20.mp3',
+      bgmLevel3: '/audio/background-sound-21-to-30.mp3',
+      bgmLevel4: '/audio/background-sound-31-to-all.mp3',
     };
 
     for (const [name, path] of Object.entries(soundPaths)) {
@@ -157,7 +220,7 @@ const calculateExplosionVolume = (enemySize, isBoss = false) => {
   return 0.4; // Very large enemies
 };
 
-const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter }) => {
+const SpaceSnakeGame = () => {
   const canvasRef = useRef(null);
   const gameLoopRef = useRef(null);
   const keysRef = useRef({});
@@ -174,23 +237,15 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
     return saved ? parseInt(saved, 10) : 0;
   });
   
-  // Avatar state for dynamic emotions
-  const [avatarState, setAvatarState] = useState('ready'); // ready, scared, crying
-  const lastHitTimeRef = useRef(0);
- 
-  // Reset avatar state after 2 seconds of no damage
-  useEffect(() => {
-    if (avatarState !== 'ready' && lastHitTimeRef.current > 0) {
-      const resetTimer = setTimeout(() => {
-        if (Date.now() - lastHitTimeRef.current >= 2000 && lives > 1) {
-          setAvatarState('ready');
-        }
-      }, 2100); // Slightly longer than 2 seconds
-      
-      return () => clearTimeout(resetTimer);
-    }
-  }, [avatarState, lives]);
+  // Player data state
+  const [playerName, setPlayerName] = useState('');
+  const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [showLoginScreen, setShowLoginScreen] = useState(true);
+  const [showCharacterSelect, setShowCharacterSelect] = useState(false);
+  const [sfxVolume, setSfxVolume] = useState(0.5);
+  const [musicVolume, setMusicVolume] = useState(0.3);
 
+  
   // Update high score when score changes
   useEffect(() => {
     if (score > highScore) {
@@ -202,47 +257,83 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
   // Initialize sound manager
   const soundManager = useSoundManager();
   const musicStartedRef = useRef(false);
-  // Load all assets on mount
+  const audioInitializedRef = useRef(false);
+   // Load all assets on mount
+   useEffect(() => {
+     const loadAssets = async () => {
+       try {
+         setLoadingStatus('Initializing audio...');
+         setLoadingProgress(10);
+         
+         // Initialize audio context
+         await soundManager.initAudio();
+         setLoadingProgress(30);
+         
+         // Load all sound files
+         setLoadingStatus('Loading sound effects...');
+         await soundManager.initSounds();
+         setLoadingProgress(70);
+         
+         // Preload background music files
+         setLoadingStatus('Loading background music...');
+         setLoadingProgress(90);
+         
+         // Mark audio as initialized
+         audioInitializedRef.current = true;
+         setLoadingProgress(100);
+         
+         // Wait a moment to show 100%
+         await new Promise(resolve => setTimeout(resolve, 500));
+         
+         // Transition to start screen
+         setGameState('start');
+       } catch (error) {
+         console.error('Error loading assets:', error);
+         setLoadingStatus('Error loading assets');
+       }
+     };
+     
+     loadAssets();
+   }, [soundManager]);
+ 
+   // Load ship image when character is selected
+   useEffect(() => {
+     if (selectedCharacter && playerConfigs[selectedCharacter]) {
+       const img = new Image();
+       img.src = playerConfigs[selectedCharacter].shipImage;
+       img.onload = () => {
+         shipImageRef.current = img;
+       };
+       img.onerror = () => {
+         console.error('Failed to load ship image:', playerConfigs[selectedCharacter].shipImage);
+         shipImageRef.current = null;
+       };
+     }
+   }, [selectedCharacter]);
+ 
+   // Load saved player data on mount
   useEffect(() => {
-    const loadAssets = async () => {
+    const savedPlayer = localStorage.getItem('spaceSnakePlayer');
+    if (savedPlayer) {
       try {
-        setLoadingStatus('Initializing audio...');
-        setLoadingProgress(10);
-        
-        // Initialize audio context
-        await soundManager.initAudio();
-        setLoadingProgress(30);
-        
-        // Load all sound files
-        setLoadingStatus('Loading sound effects...');
-        await soundManager.initSounds();
-        setLoadingProgress(70);
-        
-        // Preload background music files
-        setLoadingStatus('Loading background music...');
-        setLoadingProgress(90);
-        
-        // Mark audio as initialized
-        audioInitializedRef.current = true;
-        setLoadingProgress(100);
-        
-        // Wait a moment to show 100%
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Transition to start screen
-        setGameState('start');
+        const playerData = JSON.parse(savedPlayer);
+        setPlayerName(playerData.name);
+        setSelectedCharacter(playerData.character);
+        // Only skip login if we have both name AND character
+        if (playerData.name && playerData.character) {
+          setShowLoginScreen(false);
+          setShowCharacterSelect(false);
+        } else if (playerData.name) {
+          // Have name but no character, skip login but show character select
+          setShowLoginScreen(false);
+          setShowCharacterSelect(true);
+        }
       } catch (error) {
-        console.error('Error loading assets:', error);
-        setLoadingStatus('Error loading assets. Please refresh.');
-        // Still allow game to proceed even if audio fails
-        setTimeout(() => setGameState('start'), 2000);
+        console.error('Error loading saved player:', error);
       }
-    };
-    
-    if (gameState === 'loading') {
-      loadAssets();
     }
-  }, [gameState, soundManager]);
+  }, []);
+
 
     // Start background music when game state changes to playing
   useEffect(() => {
@@ -288,14 +379,16 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
   const powerUpsRef = useRef([]);
   const particlesRef = useRef([]);
   const starsRef = useRef([]);
-  const audioInitializedRef = useRef(false);
+
   const enemyBulletsRef = useRef([]);
-  const bossRef = useRef(null);
-  const bossTimerRef = useRef(0);
-  const [bossWarning, setBossWarning] = useState(false);
-  const bossDefeatCountRef = useRef({});
-  // Touch control refs
-  const touchControlRef = useRef({
+ const bossRef = useRef(null);
+ const bossTimerRef = useRef(0);
+ const [bossWarning, setBossWarning] = useState(false);
+ const bossDefeatCountRef = useRef({});
+ const [bossTimerDisplay, setBossTimerDisplay] = useState(60);
+ const shipImageRef = useRef(null);
+ // Touch control refs
+ const touchControlRef = useRef({
     active: false,
     touchId: null,
     startX: 0,
@@ -428,112 +521,24 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
   };
 
 
-  // Boss stages configuration - static, unchanging design
+  // Boss stages configuration - using boss images from /assets/boss/
+  // Base HP for boss 1, with 20% increase per boss
+  // Each boss appears twice: flees at 30% HP first time, final defeat second time
+  // After completing all 13 bosses, cycle repeats with 30% larger size
   const BOSS_STAGES = [
-    {
-      stage: 1,
-      name: 'MEGA COVIDO',
-      color: '#FF0000',
-      secondaryColor: '#FF4500',
-      size: 80,
-      hp: 30,
-      shape: 'circle',
-      attackPattern: 'spiral',
-      attackSpeed: 1500,
-      bulletColor: '#FF0000',
-      description: 'Fires spiraling death from above'
-    },
-    {
-      stage: 2,
-      name: 'CYBER WRAITH',
-      color: '#0066FF',
-      secondaryColor: '#00BFFF',
-      size: 90,
-      hp: 35,
-      shape: 'square',
-      attackPattern: 'spread',
-      attackSpeed: 1400,
-      bulletColor: '#00BFFF',
-      description: 'Releases devastating spreads'
-    },
-    {
-      stage: 3,
-      name: 'NEON PHANTOM',
-      color: '#8B00FF',
-      secondaryColor: '#9400D3',
-      size: 100,
-      hp: 40,
-      shape: 'triangle',
-      attackPattern: 'homing',
-      attackSpeed: 1300,
-      bulletColor: '#9400D3',
-      description: 'Homing missiles seek their prey'
-    },
-    {
-      stage: 4,
-      name: 'SOLAR GUARDIAN',
-      color: '#FFD700',
-      secondaryColor: '#FFA500',
-      size: 85,
-      hp: 45,
-      shape: 'diamond',
-      attackPattern: 'radial',
-      attackSpeed: 1200,
-      bulletColor: '#FFD700',
-      description: '360 degrees of golden destruction'
-    },
-    {
-      stage: 5,
-      name: 'TOXIC VIPER',
-      color: '#00FF00',
-      secondaryColor: '#00FF7F',
-      size: 95,
-      hp: 50,
-      shape: 'hexagon',
-      attackPattern: 'wave',
-      attackSpeed: 1100,
-      bulletColor: '#00FF7F',
-      description: 'Wave patterns of toxic energy'
-    },
-    {
-      stage: 6,
-      name: 'PLASMA STORM',
-      color: '#FF00FF',
-      secondaryColor: '#00FFFF',
-      size: 110,
-      hp: 55,
-      shape: 'star',
-      attackPattern: 'chaos',
-      attackSpeed: 1000,
-      bulletColor: '#FF00FF',
-      description: 'Unpredictable chaos patterns'
-    },
-    {
-      stage: 7,
-      name: 'SHADOW EMPEROR',
-      color: '#1a1a1a',
-      secondaryColor: '#4a4a4a',
-      size: 120,
-      hp: 60,
-      shape: 'octagon',
-      attackPattern: 'laser',
-      attackSpeed: 900,
-      bulletColor: '#FFFFFF',
-      description: 'Devastating laser beams'
-    },
-    {
-      stage: 8,
-      name: 'PRISM OVERLORD',
-      color: '#FF0000',
-      secondaryColor: ['#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'],
-      size: 130,
-      hp: 70,
-      shape: 'prism',
-      attackPattern: 'rainbow',
-      attackSpeed: 800,
-      bulletColor: 'rainbow',
-      description: 'All colors unite in destruction'
-    }
+    { stage: 1, name: 'Boss 1', image: '/assets/boss/boss-1.fw.png', size: 100, hp: 100, attackSpeed: 1500, bulletColor: '#FF0000' },
+    { stage: 2, name: 'Boss 2', image: '/assets/boss/boss-2.fw.png', size: 100, hp: 120, attackSpeed: 1450, bulletColor: '#0066FF' },
+    { stage: 3, name: 'Boss 3', image: '/assets/boss/boss-3.fw.png', size: 100, hp: 144, attackSpeed: 1400, bulletColor: '#8B00FF' },
+    { stage: 4, name: 'Boss 4', image: '/assets/boss/boss-4.fw.png', size: 100, hp: 173, attackSpeed: 1350, bulletColor: '#FFD700' },
+    { stage: 5, name: 'Boss 5', image: '/assets/boss/boss-5.fw.png', size: 100, hp: 207, attackSpeed: 1300, bulletColor: '#00FF00' },
+    { stage: 6, name: 'Boss 6', image: '/assets/boss/boss-6.fw.png', size: 100, hp: 249, attackSpeed: 1250, bulletColor: '#FF00FF' },
+    { stage: 7, name: 'Boss 7', image: '/assets/boss/boss-7.fw.png', size: 100, hp: 299, attackSpeed: 1200, bulletColor: '#1a1a1a' },
+    { stage: 8, name: 'Boss 8', image: '/assets/boss/boss-8.fw.png', size: 100, hp: 359, attackSpeed: 1150, bulletColor: '#FF4500' },
+    { stage: 9, name: 'Boss 9', image: '/assets/boss/boss-9.fw.png', size: 100, hp: 430, attackSpeed: 1100, bulletColor: '#00BFFF' },
+    { stage: 10, name: 'Boss 10', image: '/assets/boss/boss-10.fw.png', size: 100, hp: 516, attackSpeed: 1050, bulletColor: '#9400D3' },
+    { stage: 11, name: 'Boss 11', image: '/assets/boss/boss-11.fw.png', size: 100, hp: 620, attackSpeed: 1000, bulletColor: '#FFA500' },
+    { stage: 12, name: 'Boss 12', image: '/assets/boss/boss-12.fw.png', size: 100, hp: 744, attackSpeed: 950, bulletColor: '#00FF7F' },
+    { stage: 13, name: 'Boss 13', image: '/assets/boss/boss-13.fw.png', size: 100, hp: 893, attackSpeed: 900, bulletColor: '#FFFFFF' },
   ];
 
   // Initialize game
@@ -562,33 +567,6 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
       autoFire: true
     };
 
-    // Apply character bonuses
-    if (character?.bonuses) {
-      // Apply speed bonus
-      if (character.bonuses.speed) {
-        playerRef.current.speed = 8 * character.bonuses.speed;
-      }
-      
-      // Apply fire rate bonus
-      if (character.bonuses.fireRate) {
-        playerRef.current.fireRate = 200 * character.bonuses.fireRate;
-      }
-      
-      // Apply spread shot for pink character
-      if (character.bonuses.spreadShot) {
-        playerRef.current.spreadShot = true;
-      }
-      
-      // Apply extra starting lives
-      let startingLives = 3;
-      if (character.bonuses.lives) {
-        startingLives += character.bonuses.lives;
-      }
-      
-      // Set lives after character bonuses
-      setTimeout(() => setLives(startingLives), 0);
-    }
-
     // Reset arrays
     bulletsRef.current = [];
     powerUpsRef.current = [];
@@ -596,14 +574,12 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
     enemyBulletsRef.current = [];
     bossRef.current = null;
     bossTimerRef.current = 0;
-    bossTimerDisplayRef.current = 60;
-      bossWarningRef.current = false;
-      setBossWarning(false);
-      forceUpdate({});
-      
-      // Reset boss defeat counts for new game
-      bossDefeatCountRef.current = {};
-      
+       bossTimerDisplayRef.current = 60;
+       bossWarningRef.current = false;
+       setBossWarning(false);
+       // Reset boss defeat counts for new game
+       bossDefeatCountRef.current = {};
+       
       // Initialize stars background
       starsRef.current = [];
     // Initialize stars background
@@ -668,30 +644,35 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
     const defeatCount = bossDefeatCountRef.current[stageNumber] || 0;
     const isSecondAppearance = defeatCount === 1;
     
-    // Create particle system for boss based on shape
-    const particles = [];
-    const particleCount = 20;
+    // Calculate cycle number (each cycle is 13 bosses)
+    const cycleNumber = Math.floor((stageNumber - 1) / 13);
     
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (Math.PI * 2 / particleCount) * i;
-      const radius = stage.size * 0.5;
-      particles.push({
-        offsetX: Math.cos(angle) * radius,
-        offsetY: Math.sin(angle) * radius,
-        size: stage.size * 0.15,
-        angle: angle,
-        radius: radius
-      });
-    }
+    // Calculate size with 30% increase per cycle after the first
+    const baseSize = stage.size;
+    const sizeMultiplier = 1 + (cycleNumber * 0.3);
+    const actualSize = baseSize * sizeMultiplier;
+    
+    // Calculate HP with 20% increase per boss within cycle
+    const hpMultiplier = Math.pow(1.2, (stageIndex % 13));
+    const actualHp = Math.round(stage.hp * hpMultiplier);
+    
+    // Load boss image
+    const bossImage = new Image();
+    bossImage.src = stage.image;
+    
+    // No particles needed - using images instead
+    const particles = [];
     
     return {
       x: canvasWidth / 2,
       y: -150,
       stage: stage,
       currentStage: stageNumber,
+      image: bossImage,
       particles: particles,
-      hp: stage.hp,
-      maxHp: stage.hp,
+      hp: actualHp,
+      maxHp: actualHp,
+      size: actualSize,
       targetY: 80,
       lastShot: 0,
       attackAngle: 0,
@@ -701,10 +682,12 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
       escaping: false,
       escapeAngle: null,
       isSecondAppearance: isSecondAppearance,
-      defeatCount: defeatCount
+      defeatCount: defeatCount,
+      cycleNumber: cycleNumber
     };
   };
 
+  // Create dissolving effect
   // Create dissolving effect
   const createDissolveEffect = (enemy, hitPosition) => {
     enemy.particles.forEach((particle, i) => {
@@ -916,11 +899,11 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
     gameLoopRef.current = requestAnimationFrame(gameLoop);
 
     return () => {
-      if (gameLoopRef.current) {
-        cancelAnimationFrame(gameLoopRef.current);
-      }
-    };
-  }, [gameState, level]);
+     if (gameLoopRef.current) {
+       cancelAnimationFrame(gameLoopRef.current);
+     }
+   };
+  }, [gameState]);
 
   // Update game state
   const update = (deltaTime, canvas) => {
@@ -1047,27 +1030,25 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
 
     // Boss spawn timer - every 60 seconds
     if (!bossRef.current) {
-      bossTimerRef.current += deltaTime;
-      
-      // Update boss timer display (convert to seconds)
-      bossTimerDisplayRef.current = Math.max(0, Math.ceil((60000 - bossTimerRef.current) / 1000));
-      
-      // Show warning when boss is about to spawn (10 seconds before)
-      if (bossTimerDisplayRef.current <= 10 && bossTimerDisplayRef.current > 0) {
+       bossTimerRef.current += deltaTime;
+       
+       // Update boss timer display (convert to seconds)
+       const newTimerDisplay = Math.max(0, Math.ceil((60000 - bossTimerRef.current) / 1000));
+       bossTimerDisplayRef.current = newTimerDisplay;
+       
+       // Show warning when boss is about to spawn (10 seconds before)
+       if (bossTimerDisplayRef.current <= 10 && bossTimerDisplayRef.current > 0) {
         if (!bossWarningRef.current) {
           bossWarningRef.current = true;
-          forceUpdate({});
         }
       } else {
         if (bossWarningRef.current) {
           bossWarningRef.current = false;
-          forceUpdate({});
         }
       }
       
       if (bossTimerRef.current >= 60000) { // 60 seconds
         bossTimerRef.current = 0;
-        setBossWarning(false);
         bossTimerDisplayRef.current = 60;
         bossWarningRef.current = false;
         const bossStage = Math.floor(levelRef.current / 2) + 1;
@@ -1219,16 +1200,9 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < player.width / 2 + bullet.size) {
           createExplosion(player.x, player.y, '#FF0000', 30);
-          // Update avatar state on hit
-          setAvatarState('scared');
-          lastHitTimeRef.current = Date.now();
           setTimeout(() => {
             setLives(prev => {
               const newLives = prev - 1;
-              // Set to crying if on last life
-              if (newLives === 1) {
-                setAvatarState('crying');
-              }
               if (newLives <= 0) {
                 setGameState('gameover');
               }
@@ -1254,16 +1228,9 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < enemy.type.size + player.width / 3) {
           createExplosion(player.x, player.y, '#FF0000', 30);
-          // Update avatar state on hit
-          setAvatarState('scared');
-          lastHitTimeRef.current = Date.now();
           setTimeout(() => {
             setLives(prev => {
               const newLives = prev - 1;
-              // Set to crying if on last life
-              if (newLives === 1) {
-                setAvatarState('crying');
-              }
               if (newLives <= 0) {
                 setGameState('gameover');
               }
@@ -1500,8 +1467,6 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
               bossTimerRef.current = 0;
               bossTimerDisplayRef.current = 60;
               bossWarningRef.current = false;
-              forceUpdate({});
-              
               // Clear defeat count for next boss
               delete bossDefeatCountRef.current[boss.currentStage];
               bossRef.current = null;
@@ -1548,7 +1513,6 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
       levelRef.current = newLevel;
       soundManager.playMusic(newLevel);
       setTimeout(() => setLevel(newLevel), 0);
-      setTimeout(() => forceUpdate({}), 0);
     }
   };
   // Apply power-up effect
@@ -1578,11 +1542,13 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
         setTimeout(() => { player.speedBoost = false; }, config.duration);
         break;
       case 'BOMB':
+        let bombScore = 0;
         enemiesRef.current.forEach(enemy => {
           createExplosion(enemy.x, enemy.y, enemy.type.color, 20);
-          setScore(prev => prev + enemy.type.score);
+          bombScore += enemy.type.score;
         });
         enemiesRef.current = [];
+        setTimeout(() => setScore(prev => prev + bombScore), 0);
         break;
       case 'SUPER':
         player.superMode = true;
@@ -1590,21 +1556,25 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
         setTimeout(() => { player.superMode = false; }, config.duration);
         break;
       case 'EXTRA_LIFE':
-        setLives(prev => Math.min(prev + 1, 9));
+        setTimeout(() => setLives(prev => Math.min(prev + 1, 9)), 0);
         break;
     }
   };
 
   // Add power-up indicator
   const addPowerUpIndicator = (config) => {
-    setActivePowerUps(prev => {
-      const existing = prev.find(p => p.name === config.name);
-      if (existing) {
-        return prev.map(p => p.name === config.name ? { ...p, endTime: Date.now() + config.duration } : p);
-      }
-      return [...prev, { ...config, endTime: Date.now() + config.duration }];
-    });
+    // Update active power-ups display
+    setTimeout(() => {
+      setActivePowerUps(prev => {
+        const existing = prev.find(p => p.name === config.name);
+        if (existing) {
+          return prev.map(p => p.name === config.name ? { ...p, endTime: Date.now() + config.duration } : p);
+        }
+        return [...prev, { ...config, endTime: Date.now() + config.duration }];
+      });
+    }, 0);
 
+    // Remove expired power-up after duration
     setTimeout(() => {
       setActivePowerUps(prev => prev.filter(p => p.endTime > Date.now()));
     }, config.duration);
@@ -1943,53 +1913,65 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
       ctx.shadowBlur = 0;
     });
 
-    // Draw player
-    const player = playerRef.current;
-    if (player) {
-      ctx.save();
-      ctx.translate(player.x, player.y);
-
-      // Super mode aura
-      if (player.superMode) {
-        const pulseSize = 60 + Math.sin(Date.now() * 0.01) * 10;
-        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, pulseSize);
-        gradient.addColorStop(0, 'rgba(255, 0, 255, 0.6)');
-        gradient.addColorStop(0.5, 'rgba(255, 0, 255, 0.3)');
-        gradient.addColorStop(1, 'rgba(255, 0, 255, 0)');
-        ctx.beginPath();
-        ctx.arc(0, 0, pulseSize, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      }
-
-      // Shield effect
-      if (player.hasShield) {
-        ctx.beginPath();
-        ctx.arc(0, 0, player.width * 0.8, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(0, 191, 255, 0.8)';
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 25;
-        ctx.shadowColor = '#00BFFF';
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-      }
-
-      // Ship body
-      ctx.beginPath();
-      ctx.moveTo(0, -player.height / 2);
-      ctx.lineTo(-player.width / 2, player.height / 2);
-      ctx.lineTo(-player.width / 4, player.height / 3);
-      ctx.lineTo(0, player.height / 2);
-      ctx.lineTo(player.width / 4, player.height / 3);
-      ctx.lineTo(player.width / 2, player.height / 2);
-      ctx.closePath();
-
-      const shipGradient = ctx.createLinearGradient(0, -player.height / 2, 0, player.height / 2);
-      shipGradient.addColorStop(0, '#00FFFF');
-      shipGradient.addColorStop(0.5, '#0080FF');
-      shipGradient.addColorStop(1, '#0040AA');
-      ctx.fillStyle = shipGradient;
-      ctx.fill();
+     // Draw player
+     const player = playerRef.current;
+     if (player) {
+       ctx.save();
+       ctx.translate(player.x, player.y);
+       // Super mode aura
+       if (player.superMode) {
+         const pulseSize = 60 + Math.sin(Date.now() * 0.01) * 10;
+         const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, pulseSize);
+         gradient.addColorStop(0, 'rgba(255, 0, 255, 0.6)');
+         gradient.addColorStop(0.5, 'rgba(255, 0, 255, 0.3)');
+         gradient.addColorStop(1, 'rgba(255, 0, 255, 0)');
+         ctx.beginPath();
+         ctx.arc(0, 0, pulseSize, 0, Math.PI * 2);
+         ctx.fillStyle = gradient;
+         ctx.fill();
+       }
+       // Shield effect
+       if (player.hasShield) {
+         ctx.beginPath();
+         ctx.arc(0, 0, player.width * 0.8, 0, Math.PI * 2);
+         ctx.strokeStyle = 'rgba(0, 191, 255, 0.8)';
+         ctx.lineWidth = 4;
+         ctx.shadowBlur = 25;
+         ctx.shadowColor = '#00BFFF';
+         ctx.stroke();
+         ctx.shadowBlur = 0;
+       }
+       // Draw ship image or fallback to default ship
+       if (shipImageRef.current) {
+         const shipSize = player.width * 1.5;
+         ctx.drawImage(
+           shipImageRef.current,
+           -shipSize / 2,
+           -shipSize / 2,
+           shipSize,
+           shipSize
+         );
+       } else {
+         // Fallback: draw default ship
+         ctx.beginPath();
+         ctx.moveTo(0, -player.height / 2);
+         ctx.lineTo(-player.width / 2, player.height / 2);
+         ctx.lineTo(-player.width / 4, player.height / 3);
+         ctx.lineTo(0, player.height / 2);
+         ctx.lineTo(player.width / 4, player.height / 3);
+         ctx.lineTo(player.width / 2, player.height / 2);
+         ctx.closePath();
+         const shipGradient = ctx.createLinearGradient(0, -player.height / 2, 0, player.height / 2);
+         shipGradient.addColorStop(0, '#00FFFF');
+         shipGradient.addColorStop(0.5, '#0080FF');
+         shipGradient.addColorStop(1, '#0040AA');
+         ctx.fillStyle = shipGradient;
+         ctx.fill();
+         ctx.strokeStyle = '#00FFFF';
+         ctx.lineWidth = 2;
+         ctx.stroke();
+       }
+       // Engine glow
 
       ctx.strokeStyle = '#00FFFF';
       ctx.lineWidth = 2;
@@ -2107,6 +2089,28 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
     setGameState('playing');
   };
 
+
+  // Save player data to localStorage
+  const savePlayerData = (name, character) => {
+    const playerData = { name, character };
+    localStorage.setItem('spaceSnakePlayer', JSON.stringify(playerData));
+  };
+
+  // Handle player login
+  const handlePlayerLogin = (e) => {
+    e.preventDefault();
+    if (playerName.trim()) {
+      setShowLoginScreen(false);
+      setShowCharacterSelect(true);
+    }
+  };
+
+   // Handle character selection
+  const handleCharacterSelect = (characterId) => {
+    setSelectedCharacter(characterId);
+    savePlayerData(playerName, characterId);
+  };
+
   // Render UI
   return (
     <div className="relative w-full h-screen bg-slate-950 overflow-hidden">
@@ -2122,7 +2126,7 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
           {bossWarningRef.current && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
-                <div className="text-xl font-bold text-red-500 animate-pulse title-text" style={{ textShadow: '0 0 20px #ff0000, 0 0 40px #ff0000, 0 0 60px #ff0000' }}>
+                <div className="text-xl font-bold text-red-500 animate-pulse title-text" >
                   ⚠️ BOSS INCOMING! ⚠️
                 </div>
                 <div className="text-xl text-yellow-400 font-bold mt-4">
@@ -2134,25 +2138,6 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
 
           <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
             <div className="text-white space-y-2">
-            {/* Player Avatar & Name */}
-            <div className="flex items-center gap-3 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20 pointer-events-auto">
-              <div className="relative">
-                <img
-                  src={`/src/assets/player/${character.id}-${avatarState}.png`}
-                  alt={avatarState}
-                  className="w-16 h-16 object-contain"
-                  onError={(e) => {
-                    e.target.src = `/src/assets/player/${character.id}-ready.png`;
-                  }}
-                />
-              </div>
-              <div className="text-left">
-                <div className="text-white text-sm font-bold">{playerName}</div>
-                <div className={`text-xs ${character.textColor}`}>{character.name}</div>
-                <div className="text-gray-400 text-xs">{character.perkIcon} {character.perk}</div>
-              </div>
-            </div>
-
               <div className="text-sm font-bold">Score: <span className="numbers-text">{score}</span></div>
               <div className="text-sm">High Score: <span className="numbers-text">{highScore}</span></div>
               <div className="text-sm">Level: <span className="numbers-text">{level}</span></div>
@@ -2186,6 +2171,134 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
           </div>
         </>
       )}
+      {/* Login Screen */}
+      {showLoginScreen && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm z-50">
+          <div className="text-center space-y-6 p-8 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl border border-cyan-500/30 shadow-2xl max-w-md">
+            <h2 className="title-text text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
+              SPACE SNAKE
+            </h2>
+            <p className="text-gray-300">Enter your pilot name:</p>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && playerName.trim()) {
+                    e.preventDefault();
+                    setShowLoginScreen(false);
+                    setShowCharacterSelect(true);
+                  }
+                }}
+                placeholder="Pilot Name"
+                maxLength={15}
+                className="w-full px-4 py-3 bg-slate-800 text-white text-center rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                autoFocus
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    if (playerName.trim()) {
+                      setShowLoginScreen(false);
+                      setShowCharacterSelect(true);
+                    }
+                  }}
+                  className="flex-1 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!playerName.trim()}
+                >
+                  CONTINUE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Character Selection Screen */}
+      {showCharacterSelect && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 z-50">
+          <div className="text-center space-y-6 p-8 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl border border-cyan-500/30 shadow-2xl max-w-4xl w-full">
+            <h2 className="title-text text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
+              SELECT YOUR SHIP
+            </h2>
+            <p className="text-gray-300">Choose your pilot and ship:</p>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {Object.values(playerConfigs).map((config) => (
+                <button
+                  key={config.id}
+                  onClick={() => handleCharacterSelect(config.id)}
+                  className={`group relative p-4 rounded-xl border-2 transition-all transform hover:scale-105 ${
+                    selectedCharacter === config.id
+                      ? 'border-cyan-500 bg-cyan-500/20 shadow-lg shadow-cyan-500/50'
+                      : 'border-slate-700 bg-slate-800/50 hover:border-slate-500'
+                  }`}
+                >
+                  {/* Ship Image */}
+                  <div className="relative w-32 h-32 mx-auto mb-3 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+                    <img
+                      src={config.shipImage}
+                      alt={`${config.name} Ship`}
+                      className="w-full h-full object-contain"
+                      
+                    />
+                  </div>
+
+                  {/* Player Avatar */}
+                  <div className="relative w-12 h-12 mx-auto mb-2 overflow-hidden rounded-lg bg-slate-900 border-2 border-slate-600">
+                    <img
+                      src={config.avatarImage}
+                      alt={config.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Character Info */}
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">{config.emoji}</div>
+                    <h3 className="text-white font-bold text-sm" >
+                      {config.name}
+                    </h3>
+                    <p className="text-xs text-gray-400 capitalize">{config.shipType}</p>
+                  </div>
+
+                  {/* Selection Indicator */}
+                  {selectedCharacter === config.id && (
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                      ✓
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex justify-center gap-4 pt-4">
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={() => {
+                    setShowCharacterSelect(false);
+                    setShowLoginScreen(true);
+                  }}
+                  className="flex-1 px-6 py-3 bg-slate-700 text-white font-bold rounded-lg hover:bg-slate-600 transition-all border border-slate-600"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => {
+                    if (selectedCharacter) {
+                      setShowCharacterSelect(false);
+                    }
+                  }}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!selectedCharacter}
+                >
+                  START GAME
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Start Screen */}
       {gameState === 'start' && (
@@ -2194,6 +2307,25 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
             <h1 className="title-text text-6xl font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
               SPACE SNAKE
             </h1>
+            
+            {/* Character Preview */}
+            <div className="flex items-center justify-center gap-4 bg-slate-800/50 rounded-xl p-4 border border-cyan-500/20">
+              <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-900 border-2 border-slate-600 shadow-lg">
+                <img
+                  src={playerConfigs[selectedCharacter]?.avatarImage}
+                  alt={playerConfigs[selectedCharacter]?.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="text-left">
+                <p className="text-gray-400 text-xs">PILOT</p>
+                <p className="text-white font-bold">{playerName}</p>
+                <p className="text-lg font-bold" >
+                  {playerConfigs[selectedCharacter]?.emoji} {playerConfigs[selectedCharacter]?.name ?? 'Select Character'}
+                </p>
+              </div>
+            </div>
+            
             <p className="text-gray-300 text-sm">
               Destroy particle enemies and collect power-ups!
             </p>
@@ -2242,6 +2374,14 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
             >
               START GAME
             </button>
+            
+              <button
+                onClick={() => setShowCharacterSelect(true)}
+                className="px-8 py-3 bg-slate-700 text-white text-sm font-bold rounded-lg hover:bg-slate-600 transition-all border border-slate-600"
+              >
+                🎨 Change Character
+              </button>
+
           </div>
         </div>
       )}
@@ -2263,21 +2403,116 @@ const SpaceSnakeGame = ({ playerName, character, onBackToMenu, onChangeCharacter
               className="title-text px-8 py-4 bg-gradient-to-r from-red-500 to-orange-600 text-white text-sm font-bold rounded-lg hover:from-red-400 hover:to-orange-500 transition-all transform hover:scale-105 shadow-lg"
             >
               PLAY AGAIN
-            </button>
-          </div>
-        </div>
-      )}
+           </button>
+         </div>
+       </div>
+     )}
+
+     {/* Playing HUD - Player Details with Avatar */}
+     {gameState === 'playing' && (
+       <div className="absolute top-0 left-0 right-0 p-4 z-10 pointer-events-none">
+         <div className="max-w-7xl mx-auto space-y-3">
+           {/* Top Navigation Bar */}
+           <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-sm rounded-2xl p-3 border border-cyan-500/30 shadow-2xl">
+             <div className="flex justify-between items-center">
+               {/* Left: Game Title */}
+               <div className="flex items-center gap-3">
+                 <h1 className="title-text text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-600 bg-clip-text text-transparent">
+                   SPACE SNAKE
+                 </h1>
+               </div>
+
+               {/* Center: Score & Level */}
+               <div className="flex gap-3">
+                 <div className="text-center">
+                   <p className="text-yellow-400 font-bold text-3xl title-text leading-none">{score}</p>
+                   <p className="text-gray-400 text-xs">SCORE</p>
+                 </div>
+                 <div className="text-center">
+                   <p className="text-purple-400 font-bold text-2xl title-text leading-none">{level}</p>
+                   <p className="text-gray-400 text-xs">LEVEL</p>
+                 </div>
+               </div>
+
+               {/* Right: Lives & Power-ups */}
+               <div className="flex gap-3 items-center">
+                 <div className="flex items-center gap-2">
+                   <span className="text-red-400 text-xl">❤️</span>
+                   <span className="text-white font-bold text-xl">{lives}</span>
+                 </div>
+                 {activePowerUps.length > 0 && (
+                   <div className="flex items-center gap-2">
+                     <span className="text-green-400 text-xl">⚡</span>
+                     <span className="text-white font-bold text-lg">{activePowerUps.length}</span>
+                   </div>
+                 )}
+               </div>
+             </div>
+           </div>
+
+           {/* Second Row: Player Info and Boss Info */}
+           <div className="flex justify-between items-start gap-3">
+             {/* Left: Player Info with Avatar */}
+             <div className="bg-slate-900/90 backdrop-blur-sm rounded-2xl p-3 border border-cyan-500/30 shadow-2xl flex-1">
+               <div className="flex items-center gap-3">
+                 {/* Player Avatar */}
+                 <div className="relative w-14 h-14 flex-shrink-0 overflow-hidden rounded-xl bg-slate-800 border-2 border-slate-600 shadow-lg">
+                   <img
+                     src={playerConfigs[selectedCharacter]?.avatarImage}
+                     alt={playerConfigs[selectedCharacter]?.name}
+                     className="w-full h-full object-cover"
+                   />
+                 </div>
+                 
+                 {/* Player Info */}
+                 <div className="text-left flex-1">
+                   <p className="text-white font-bold text-base leading-tight">{playerName}</p>
+                   <p className="text-xs font-bold" >
+                     {playerConfigs[selectedCharacter]?.emoji} {playerConfigs[selectedCharacter]?.name ?? 'Pilot'}
+                   </p>
+                 </div>
+               </div>
+             </div>
+
+             {/* Center: Boss/Enemy Info */}
+             <div className="bg-slate-900/90 backdrop-blur-sm rounded-2xl px-4 py-3 border border-orange-500/30 shadow-2xl flex-1 text-center">
+               {!bossRef.current ? (
+                 <div>
+                   <p className="text-gray-400 text-xs">BOSS INCOMING</p>
+                   <p className="text-orange-400 font-bold text-2xl title-text leading-none">
+                     ⏱️ {bossTimerDisplayRef.current}s
+                   </p>
+                 </div>
+               ) : (
+                 <div>
+                   <p className="text-red-400 text-xs font-bold">⚠️ BOSS BATTLE</p>
+                   <p className="text-white font-bold text-sm leading-tight">
+                     {bossRef.current.stage.name}
+                   </p>
+                   <div className="mt-1 w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                     <div 
+                       className="h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-300"
+                       style={{ width: `${(bossRef.current.hp / bossRef.current.maxHp) * 100}%` }}
+                     />
+                   </div>
+                 </div>
+               )}
+             </div>
+           </div>
+         </div>
+       </div>
+     )}
+     {/* Canvas for the game */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0"
+      />
+
     </div>
   );
 };
 
 export default SpaceSnakeGame;
-
-
-
-
-
-
 
 
 

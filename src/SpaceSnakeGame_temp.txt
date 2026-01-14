@@ -1,3 +1,0 @@
-         player.x += moveX * currentSpeed * 0.8;
-         player.y += moveY * currentSpeed * 0.8;
-

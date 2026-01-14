@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useState } from 'react';
-import SpaceSnakeGame from './SpaceSnakeGame';
+import SpaceSnakeGame from './components/SpaceSnakeGameNew'; // ✅ NEW IMPLEMENTATION - Uses separate Game Engine
 import NameEntry from './components/NameEntry';
 import CharacterSelect from './components/CharacterSelect';
 
@@ -48,9 +48,8 @@ function App() {
       {gameState === 'playing' && (
         <SpaceSnakeGame
           playerName={playerName}
-          character={selectedCharacter}
-          onBackToMenu={handleBackToNameEntry}
-          onChangeCharacter={handleBackToCharacterSelect}
+          characterType={selectedCharacter?.id || 'blue'} // Map character object to type string
+          onMenuReturn={handleBackToCharacterSelect}
         />
       )}
     </div>

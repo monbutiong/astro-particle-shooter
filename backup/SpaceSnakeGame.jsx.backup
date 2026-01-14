@@ -45,6 +45,25 @@ const playerConfigs = {
 
 
 
+// Enemy image paths configuration
+const SHOOTING_ENEMY_IMAGES = [
+  '/src/assets/shooting-enemy/enemy-1.fw.png',
+  '/src/assets/shooting-enemy/enemy-2.fw.png',
+  '/src/assets/shooting-enemy/enemy-3.fw.png',
+  '/src/assets/shooting-enemy/enemy-4.fw.png',
+  '/src/assets/shooting-enemy/enemy-5.fw.png'
+];
+
+const NONE_SHOOTING_ENEMY_IMAGES = [
+  '/src/assets/none-shooting-enemy/steriods-1.fw.png',
+  '/src/assets/none-shooting-enemy/steriods-2.fw.png',
+  '/src/assets/none-shooting-enemy/steriods-3.fw.png',
+  '/src/assets/none-shooting-enemy/steriods-4.fw.png',
+  '/src/assets/none-shooting-enemy/steriods-5.fw.png',
+  '/src/assets/none-shooting-enemy/steriods-6.fw.png'
+];
+
+
 // Helper function to lighten a hex color
 const lightenColor = (color, percent) => {
   const num = parseInt(color.replace('#', ''), 16);
@@ -521,112 +540,24 @@ const SpaceSnakeGame = () => {
   };
 
 
-  // Boss stages configuration - static, unchanging design
+  // Boss stages configuration - using boss images from /assets/boss/
+  // Base HP for boss 1, with 20% increase per boss
+  // Each boss appears twice: flees at 30% HP first time, final defeat second time
+  // After completing all 13 bosses, cycle repeats with 30% larger size
   const BOSS_STAGES = [
-    {
-      stage: 1,
-      name: 'MEGA COVIDO',
-      color: '#FF0000',
-      secondaryColor: '#FF4500',
-      size: 80,
-      hp: 30,
-      shape: 'circle',
-      attackPattern: 'spiral',
-      attackSpeed: 1500,
-      bulletColor: '#FF0000',
-      description: 'Fires spiraling death from above'
-    },
-    {
-      stage: 2,
-      name: 'CYBER WRAITH',
-      color: '#0066FF',
-      secondaryColor: '#00BFFF',
-      size: 90,
-      hp: 35,
-      shape: 'square',
-      attackPattern: 'spread',
-      attackSpeed: 1400,
-      bulletColor: '#00BFFF',
-      description: 'Releases devastating spreads'
-    },
-    {
-      stage: 3,
-      name: 'NEON PHANTOM',
-      color: '#8B00FF',
-      secondaryColor: '#9400D3',
-      size: 100,
-      hp: 40,
-      shape: 'triangle',
-      attackPattern: 'homing',
-      attackSpeed: 1300,
-      bulletColor: '#9400D3',
-      description: 'Homing missiles seek their prey'
-    },
-    {
-      stage: 4,
-      name: 'SOLAR GUARDIAN',
-      color: '#FFD700',
-      secondaryColor: '#FFA500',
-      size: 85,
-      hp: 45,
-      shape: 'diamond',
-      attackPattern: 'radial',
-      attackSpeed: 1200,
-      bulletColor: '#FFD700',
-      description: '360 degrees of golden destruction'
-    },
-    {
-      stage: 5,
-      name: 'TOXIC VIPER',
-      color: '#00FF00',
-      secondaryColor: '#00FF7F',
-      size: 95,
-      hp: 50,
-      shape: 'hexagon',
-      attackPattern: 'wave',
-      attackSpeed: 1100,
-      bulletColor: '#00FF7F',
-      description: 'Wave patterns of toxic energy'
-    },
-    {
-      stage: 6,
-      name: 'PLASMA STORM',
-      color: '#FF00FF',
-      secondaryColor: '#00FFFF',
-      size: 110,
-      hp: 55,
-      shape: 'star',
-      attackPattern: 'chaos',
-      attackSpeed: 1000,
-      bulletColor: '#FF00FF',
-      description: 'Unpredictable chaos patterns'
-    },
-    {
-      stage: 7,
-      name: 'SHADOW EMPEROR',
-      color: '#1a1a1a',
-      secondaryColor: '#4a4a4a',
-      size: 120,
-      hp: 60,
-      shape: 'octagon',
-      attackPattern: 'laser',
-      attackSpeed: 900,
-      bulletColor: '#FFFFFF',
-      description: 'Devastating laser beams'
-    },
-    {
-      stage: 8,
-      name: 'PRISM OVERLORD',
-      color: '#FF0000',
-      secondaryColor: ['#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'],
-      size: 130,
-      hp: 70,
-      shape: 'prism',
-      attackPattern: 'rainbow',
-      attackSpeed: 800,
-      bulletColor: 'rainbow',
-      description: 'All colors unite in destruction'
-    }
+    { stage: 1, name: 'Boss 1', image: '/assets/boss/boss-1.fw.png', size: 100, hp: 100, attackSpeed: 1500, bulletColor: '#FF0000' },
+    { stage: 2, name: 'Boss 2', image: '/assets/boss/boss-2.fw.png', size: 100, hp: 120, attackSpeed: 1450, bulletColor: '#0066FF' },
+    { stage: 3, name: 'Boss 3', image: '/assets/boss/boss-3.fw.png', size: 100, hp: 144, attackSpeed: 1400, bulletColor: '#8B00FF' },
+    { stage: 4, name: 'Boss 4', image: '/assets/boss/boss-4.fw.png', size: 100, hp: 173, attackSpeed: 1350, bulletColor: '#FFD700' },
+    { stage: 5, name: 'Boss 5', image: '/assets/boss/boss-5.fw.png', size: 100, hp: 207, attackSpeed: 1300, bulletColor: '#00FF00' },
+    { stage: 6, name: 'Boss 6', image: '/assets/boss/boss-6.fw.png', size: 100, hp: 249, attackSpeed: 1250, bulletColor: '#FF00FF' },
+    { stage: 7, name: 'Boss 7', image: '/assets/boss/boss-7.fw.png', size: 100, hp: 299, attackSpeed: 1200, bulletColor: '#1a1a1a' },
+    { stage: 8, name: 'Boss 8', image: '/assets/boss/boss-8.fw.png', size: 100, hp: 359, attackSpeed: 1150, bulletColor: '#FF4500' },
+    { stage: 9, name: 'Boss 9', image: '/assets/boss/boss-9.fw.png', size: 100, hp: 430, attackSpeed: 1100, bulletColor: '#00BFFF' },
+    { stage: 10, name: 'Boss 10', image: '/assets/boss/boss-10.fw.png', size: 100, hp: 516, attackSpeed: 1050, bulletColor: '#9400D3' },
+    { stage: 11, name: 'Boss 11', image: '/assets/boss/boss-11.fw.png', size: 100, hp: 620, attackSpeed: 1000, bulletColor: '#FFA500' },
+    { stage: 12, name: 'Boss 12', image: '/assets/boss/boss-12.fw.png', size: 100, hp: 744, attackSpeed: 950, bulletColor: '#00FF7F' },
+    { stage: 13, name: 'Boss 13', image: '/assets/boss/boss-13.fw.png', size: 100, hp: 893, attackSpeed: 900, bulletColor: '#FFFFFF' },
   ];
 
   // Initialize game
@@ -689,16 +620,34 @@ const SpaceSnakeGame = () => {
     setActivePowerUps([]);
   }, []);
 
-  // Create enemy particle system
+  // Create enemy with images based on boss level
   const createEnemy = (canvasWidth, canvasHeight, currentLevel) => {
     const typeKeys = Object.keys(ENEMY_TYPES);
     const typeKey = typeKeys[Math.floor(Math.random() * typeKeys.length)];
     const type = ENEMY_TYPES[typeKey];
     
-    const particles = [];
     const baseX = Math.random() * (canvasWidth - 100) + 50;
     const baseY = -50;
     
+    // Calculate boss stage to determine enemy image tier
+    const bossStage = Math.floor(currentLevel / 2) + 1;
+    
+    // Select image based on enemy type (shooting vs non-shooting)
+    let enemyImage;
+    if (type.canShoot) {
+      // Shooting enemies: higher boss = higher numbered image (1-5)
+      const imageIndex = Math.min(bossStage - 1, SHOOTING_ENEMY_IMAGES.length - 1);
+      enemyImage = new Image();
+      enemyImage.src = SHOOTING_ENEMY_IMAGES[imageIndex];
+    } else {
+      // Non-shooting enemies: higher boss = higher numbered image (1-6)
+      const imageIndex = Math.min(bossStage - 1, NONE_SHOOTING_ENEMY_IMAGES.length - 1);
+      enemyImage = new Image();
+      enemyImage.src = NONE_SHOOTING_ENEMY_IMAGES[imageIndex];
+    }
+    
+    // Keep particles for dissolve effects
+    const particles = [];
     for (let i = 0; i < type.particleCount; i++) {
       const angle = (Math.PI * 2 / type.particleCount) * i + Math.random() * 0.3;
       const radius = type.size * 0.4 + Math.random() * type.size * 0.3;
@@ -714,6 +663,7 @@ const SpaceSnakeGame = () => {
       x: baseX,
       y: baseY,
       type,
+      image: enemyImage,
       particles,
       hp: type.hp + Math.floor(currentLevel / 3),
       maxHp: type.hp + Math.floor(currentLevel / 3),
@@ -732,30 +682,35 @@ const SpaceSnakeGame = () => {
     const defeatCount = bossDefeatCountRef.current[stageNumber] || 0;
     const isSecondAppearance = defeatCount === 1;
     
-    // Create particle system for boss based on shape
-    const particles = [];
-    const particleCount = 20;
+    // Calculate cycle number (each cycle is 13 bosses)
+    const cycleNumber = Math.floor((stageNumber - 1) / 13);
     
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (Math.PI * 2 / particleCount) * i;
-      const radius = stage.size * 0.5;
-      particles.push({
-        offsetX: Math.cos(angle) * radius,
-        offsetY: Math.sin(angle) * radius,
-        size: stage.size * 0.15,
-        angle: angle,
-        radius: radius
-      });
-    }
+    // Calculate size with 30% increase per cycle after the first
+    const baseSize = stage.size;
+    const sizeMultiplier = 1 + (cycleNumber * 0.3);
+    const actualSize = baseSize * sizeMultiplier;
+    
+    // Calculate HP with 20% increase per boss within cycle
+    const hpMultiplier = Math.pow(1.2, (stageIndex % 13));
+    const actualHp = Math.round(stage.hp * hpMultiplier);
+    
+    // Load boss image
+    const bossImage = new Image();
+    bossImage.src = stage.image;
+    
+    // No particles needed - using images instead
+    const particles = [];
     
     return {
       x: canvasWidth / 2,
       y: -150,
       stage: stage,
       currentStage: stageNumber,
+      image: bossImage,
       particles: particles,
-      hp: stage.hp,
-      maxHp: stage.hp,
+      hp: actualHp,
+      maxHp: actualHp,
+      size: actualSize,
       targetY: 80,
       lastShot: 0,
       attackAngle: 0,
@@ -765,10 +720,12 @@ const SpaceSnakeGame = () => {
       escaping: false,
       escapeAngle: null,
       isSecondAppearance: isSecondAppearance,
-      defeatCount: defeatCount
+      defeatCount: defeatCount,
+      cycleNumber: cycleNumber
     };
   };
 
+  // Create dissolving effect
   // Create dissolving effect
   const createDissolveEffect = (enemy, hitPosition) => {
     enemy.particles.forEach((particle, i) => {
@@ -1716,39 +1673,69 @@ const SpaceSnakeGame = () => {
       ctx.restore();
     });
 
-    // Draw enemies as particle systems
+    // Draw enemies as images
     enemiesRef.current.forEach(enemy => {
       const dissolveFactor = Math.max(0, 1 - enemy.dissolve);
       
-      enemy.particles.forEach((particle, i) => {
-        const px = enemy.x + particle.offsetX;
-        const py = enemy.y + particle.offsetY;
-        const size = particle.size * dissolveFactor * (1 - enemy.dissolve * 0.5);
+      ctx.save();
+      ctx.translate(enemy.x, enemy.y);
+      
+      // Glow effect
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = enemy.type.color;
+      
+      // Draw enemy image if loaded
+      if (enemy.image && enemy.image.complete) {
+        const imageSize = enemy.type.size * 2.5;
+        const scale = dissolveFactor;
         
-        if (size > 0.5) {
-          ctx.beginPath();
-          ctx.arc(px, py, size, 0, Math.PI * 2);
+        // Subtle floating animation
+        const floatOffset = Math.sin(enemy.time * 0.003) * 3;
+        
+        ctx.save();
+        ctx.globalAlpha = dissolveFactor * 0.9;
+        ctx.translate(0, floatOffset);
+        ctx.scale(scale, scale);
+        
+        // Draw centered image
+        ctx.drawImage(
+          enemy.image,
+          -imageSize / 2,
+          -imageSize / 2,
+          imageSize,
+          imageSize
+        );
+        
+        ctx.restore();
+      } else {
+        // Fallback: draw particle system if image not loaded
+        enemy.particles.forEach((particle, i) => {
+          const px = particle.offsetX;
+          const py = particle.offsetY;
+          const size = particle.size * dissolveFactor * (1 - enemy.dissolve * 0.5);
           
-          // Gradient for particle
-          const gradient = ctx.createRadialGradient(px, py, 0, px, py, size);
-          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-          gradient.addColorStop(0.3, enemy.type.color);
-          gradient.addColorStop(1, 'rgba(0, 0, 50, 0.3)');
-          
-          ctx.fillStyle = gradient;
-          ctx.globalAlpha = dissolveFactor * 0.8;
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          
-          // Glow effect
-          ctx.shadowBlur = 15;
-          ctx.shadowColor = enemy.type.color;
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-        }
-      });
+          if (size > 0.5) {
+            ctx.beginPath();
+            ctx.arc(px, py, size, 0, Math.PI * 2);
+            
+            const gradient = ctx.createRadialGradient(px, py, 0, px, py, size);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(0.3, enemy.type.color);
+            gradient.addColorStop(1, 'rgba(0, 0, 50, 0.3)');
+            
+            ctx.fillStyle = gradient;
+            ctx.globalAlpha = dissolveFactor * 0.8;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        });
+      }
+      
+      ctx.restore();
 
       // Health bar for multi-HP enemies
       if (enemy.maxHp > 1 && enemy.hp < enemy.maxHp) {
@@ -2594,7 +2581,6 @@ const SpaceSnakeGame = () => {
 };
 
 export default SpaceSnakeGame;
-
 
 
 
