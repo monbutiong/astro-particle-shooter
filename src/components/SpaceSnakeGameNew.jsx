@@ -32,6 +32,11 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     yellow: '#ffff44'
   };
   
+  // Format score with zero-padding (8 digits)
+  const formatScore = (scoreValue) => {
+    return String(scoreValue).padStart(8, '0');
+  };
+  
   // Helper functions for avatar states
   const getAvatarImage = (charType, state) => {
     const stateMap = {
@@ -286,20 +291,24 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
           zIndex: 10
         }}>
           <div style={{ color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
-              Score: {score.toLocaleString()}
+            <div style={{ 
+              fontSize: '18px', 
+              fontWeight: 'bold', 
+              marginBottom: '4px',
+              fontFamily: 'monospace',
+              letterSpacing: '1px',
+              textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+            }}>
+              {formatScore(score)}
             </div>
             <div style={{ fontSize: '14px' }}>
-              Lives: {'❤️'.repeat(Math.max(0, lives))}
-            </div>
-            <div style={{ fontSize: '14px', marginTop: '5px' }}>
-              Level: {level}
+              {'❤️'.repeat(Math.max(0, lives))}
             </div>
           </div>
           
           <div style={{ textAlign: 'right' }}>
             <div style={{
-              width: '60px',
+              width: '50px',
               height: '60px',
               margin: '0 auto 10px auto',
               borderRadius: '10px',

@@ -300,7 +300,7 @@ class PowerUp {
     this.y = y;
     this.type = type;
     this.config = POWERUP_TYPES[type];
-    this.size = 20; // Increased to 50% of original size (40 * 0.5 = 20)
+    this.size = 28; // Increased to 70% of original size (40 * 0.7 = 28)
     this.active = true;
     this.pulsePhase = Math.random() * Math.PI * 2;
     this.angle = 0;
