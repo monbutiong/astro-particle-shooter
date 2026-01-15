@@ -20,8 +20,178 @@ const GAME_CONFIG = {
   CANVAS_HEIGHT: 600,
   SPAWN_RATE: 1500,
   BOSS_SPAWN_LEVEL: 5,
-  DIFFICULTY_SCALE: 1.1
+  DIFFICULTY_SCALE: 1.1,
+  BOSS_SPAWN_TIME: 60000 // Boss spawns after 60 seconds (60000ms)
 };
+
+// ==================== BOSS CONFIGURATION ====================
+// Edit these values to customize boss fights for each stage
+// Bosses appear every 60 seconds during gameplay
+const BOSSES = {
+  // Stage 1 Boss (60 seconds)
+  STAGE_1: {
+    stage: 1,
+    name: 'Mega Destroyer',
+    spawnTime: 60, // seconds before appearing
+    size: 160, // Boss size in pixels (larger = bigger)
+    speed: 2.0, // Movement speed
+    hp: 100, // Health points
+    maxHp: 100, // Maximum health
+    points: 1000, // Score awarded when defeated
+    color: '#ff00ff', // Color for debug/backup rendering
+    imageKey: 'boss-1', // Image file: boss-1.png
+    
+    // Attack Pattern 0: Straight shooting + occasional spread
+    attackPatterns: ['straight', 'spread'],
+    shootRate: 2000, // Milliseconds between shots (2000 = 2 seconds)
+    bulletSpeed: 6,
+    bulletDamage: 1,
+    
+    // Movement: Enters from top, then moves side-to-side
+    movementType: 'side-to-side',
+    movementSpeed: 2.0,
+    targetY: 150, // Y position where boss stops descending
+    
+    // Special abilities
+    hasSpecialAttack: false, // No special attack in stage 1
+    specialAttackInterval: 0, // N/A
+    
+    // Fight description: Boss moves horizontally at the top of the screen,
+    // shooting bullets straight down. Player should dodge and shoot up.
+    // Defeat within 60 seconds or face next wave of enemies.
+  },
+  
+  // Stage 2 Boss (120 seconds = 2 minutes)
+  STAGE_2: {
+    stage: 2,
+    name: 'Doom Bringer',
+    spawnTime: 60, // seconds (resets after each boss defeat)
+    size: 180, // Larger than stage 1
+    speed: 2.5, // Faster movement
+    hp: 150, // More health
+    maxHp: 150,
+    points: 2500, // More points
+    color: '#ff4400',
+    imageKey: 'boss-2',
+    
+    // Attack Pattern 1: Spread shot + aimed shots
+    attackPatterns: ['spread', 'aimed'],
+    shootRate: 1800, // Faster shooting
+    bulletSpeed: 7,
+    bulletDamage: 1,
+    
+    movementType: 'side-to-side',
+    movementSpeed: 2.5,
+    targetY: 120,
+    
+    // Special: Occasial burst fire
+    hasSpecialAttack: true,
+    specialAttackInterval: 8000, // Every 8 seconds
+    
+    // Fight description: Faster and tougher. Shoots 3-bullet spreads
+    // and occasionally aims directly at player. Watch for burst attacks!
+  },
+  
+  // Stage 3 Boss (180 seconds = 3 minutes)
+  STAGE_3: {
+    stage: 3,
+    name: 'Death Star',
+    spawnTime: 60,
+    size: 200,
+    speed: 3.0,
+    hp: 200,
+    maxHp: 200,
+    points: 5000,
+    color: '#00ff00',
+    imageKey: 'boss-3',
+    
+    // Attack Pattern 2: Spiral + aimed bursts
+    attackPatterns: ['spiral', 'bursts'],
+    shootRate: 1500, // Even faster
+    bulletSpeed: 8,
+    bulletDamage: 2, // More damage
+    
+    movementType: 'circular', // Circular movement pattern
+    movementSpeed: 3.0,
+    targetY: 100,
+    
+    // Special: Spiral bullet hell
+    hasSpecialAttack: true,
+    specialAttackInterval: 5000,
+    
+    // Fight description: Moves in circular pattern while shooting
+    // spiral bullets. Very dangerous - use cover and power-ups!
+  },
+  
+  // Stage 4 Boss (240 seconds = 4 minutes)
+  STAGE_4: {
+    stage: 4,
+    name: 'Omega Destroyer',
+    spawnTime: 60,
+    size: 220,
+    speed: 3.5,
+    hp: 300,
+    maxHp: 300,
+    points: 10000,
+    color: '#ffff00',
+    imageKey: 'boss-4',
+    
+    // All attack patterns combined
+    attackPatterns: ['straight', 'spread', 'aimed', 'spiral'],
+    shootRate: 1200, // Very fast
+    bulletSpeed: 9,
+    bulletDamage: 2,
+    
+    movementType: 'erratic', // Unpredictable movement
+    movementSpeed: 3.5,
+    targetY: 80,
+    
+    // Multiple special attacks
+    hasSpecialAttack: true,
+    specialAttackInterval: 4000,
+    
+    // Fight description: Extremely dangerous boss with all attack types.
+    // Moves erratically. Save your best power-ups for this fight!
+  },
+  
+  // Stage 5 Boss (300 seconds = 5 minutes) - FINAL BOSS
+  STAGE_5: {
+    stage: 5,
+    name: 'GALAXY DEVOURER',
+    spawnTime: 60,
+    size: 250, // Massive
+    speed: 4.0,
+    hp: 500, // Boss with 500 HP
+    maxHp: 500,
+    points: 50000, // Huge score
+    color: '#ff0080',
+    imageKey: 'boss-5',
+    
+    // Ultimate attack patterns
+    attackPatterns: ['ultimate'],
+    shootRate: 800, // Insanely fast
+    bulletSpeed: 10,
+    bulletDamage: 3, // High damage
+    
+    movementType: 'teleport', // Teleports around
+    movementSpeed: 4.0,
+    targetY: 60,
+    
+    // Constant special attacks
+    hasSpecialAttack: true,
+    specialAttackInterval: 2000,
+    
+    // Fight description: The final boss! Teleports, shoots bullet hells,
+    // has massive health. Requires all skill and power-ups to defeat.
+    // Good luck, pilot!
+  }
+};
+
+// Helper function to get boss config by stage
+function getBossConfig(stage) {
+  const bossKey = `STAGE_${Math.min(stage, 5)}`; // Cap at stage 5
+  return BOSSES[bossKey] || BOSSES.STAGE_1;
+}
 
 // ==================== OBJECT POOLS ====================
 class ObjectPool {
@@ -165,7 +335,7 @@ const ENEMY_TYPES = {
     color: '#44AAFF',
     size: 30,
     speed: 0.8, // Slow
-    hp: 4,
+    hp: 5,
     points: 150,
     canShoot: false
   },
@@ -173,7 +343,7 @@ const ENEMY_TYPES = {
     color: '#44AAFF',
     size: 18,
     speed: 2.0, // Medium
-    hp: 2,
+    hp: 3,
     points: 80,
     canShoot: false
   },
@@ -290,6 +460,30 @@ const POWERUP_TYPES = {
     color: '#FFD700',
     rarity: 'legendary',
     isLegendary: true
+  },
+  COIN_100: {
+    name: 'Coin +100',
+    icon: 'coin-1.fw.png',
+    duration: 0, // Instant effect
+    color: '#FFD700',
+    rarity: 'common',
+    points: 100
+  },
+  COIN_1000: {
+    name: 'Coin +1000',
+    icon: 'coin-2.fw.png',
+    duration: 0, // Instant effect
+    color: '#FFA500',
+    rarity: 'uncommon',
+    points: 1000
+  },
+  COIN_10000: {
+    name: 'Coin +10000',
+    icon: 'coin-3.fw.png',
+    duration: 0, // Instant effect
+    color: '#FF4500',
+    rarity: 'rare',
+    points: 10000
   }
 };
 
@@ -453,12 +647,26 @@ class GameEngine {
     
     // Asset loader
     this.assetLoader = new AssetLoader();
+    this.bossActive = false;
     
     // Boss timer: boss spawns after 60 seconds
     this.bossTimer = 0;
-    this.bossSpawnTime = 5000; // 5 seconds in milliseconds - MUCH FASTER!
+    this.bossSpawnTime = 0; // Will be set by resetBossTimer()
     this.gameTime = 0;
     this.bossWarningShown = false; // Track if warning was shown
+    
+    // Enemy spawn volume increase system
+    this.spawnVolumeIncrease = 0; // 0% to 100%
+    this.lastVolumeIncreaseTime = 0; // Track last increase time
+    this.volumeIncreaseInterval = 10000; // 10 seconds in milliseconds
+    this.maxVolumeIncrease = 100; // Max 100% increase
+    
+    // Entrance animation system
+    this.isEntranceAnimation = false;
+    this.entrancePhase = 'idle'; // idle, ascending, stage_message, complete
+    this.entranceTimer = 0;
+    this.stageMessage = '';
+    this.stageMessageOpacity = 0;
     
     // Stars for space warp background
     this.stars = [];
@@ -637,6 +845,10 @@ class GameEngine {
       'powerup-ALLY_SUPPORT': '/assets/power-ups/one-of-other-charater-will-appear-to-help.fw.png',
       'powerup-SUPER_MODE': '/assets/power-ups/super-1.fw.png',
       'powerup-SUPER_MODE_2': '/assets/power-ups/super-2.fw.png',
+      // Coin power-ups
+      'powerup-COIN_100': '/assets/power-ups/coin-1.fw.png',
+      'powerup-COIN_1000': '/assets/power-ups/coin-2.fw.png',
+      'powerup-COIN_10000': '/assets/power-ups/coin-3.fw.png',
       // Ship upgrades (all 4 colors, 4 levels each)
       // Blue ships
       'ship-blue-0': '/assets/player/blue-level-0.fw.png',
@@ -671,12 +883,18 @@ class GameEngine {
   reset() {
     // Reset game state without starting
     this.player.x = this.canvas.width / 2;
-    this.player.y = this.canvas.height - 100;
+    // Don't set player.y here - entrance animation will handle it
     this.player.score = 0;
     this.player.hp = 3;
     this.player.invincible = 0;
     this.player.level = 0; // Reset level to 0 (basic ship)
-    this.bossTimer = this.bossSpawnTime;
+    
+    // Reset spawn volume increase
+    this.spawnVolumeIncrease = 0;
+    this.lastVolumeIncreaseTime = 0;
+    
+    // Reset boss timer using boss configuration
+    this.resetBossTimer();
     this.gameTime = 0;
     this.bossActive = false;
     this.currentLevel = 1;
@@ -689,6 +907,9 @@ class GameEngine {
     this.isPaused = false;
     this.isGameOver = false; // CRITICAL: Reset game over flag!
     this.player.isDead = false; // Reset player death state
+    
+    // Initialize entrance animation AFTER all other setup
+    this.startEntranceAnimation();
   }
   
   start() {
@@ -715,6 +936,88 @@ class GameEngine {
   stop() {
     this.isRunning = false;
     this.callbacks.onGameOver?.(this.player.score);
+  }
+  
+  // Entrance Animation
+  startEntranceAnimation() {
+    this.isEntranceAnimation = true;
+    this.entrancePhase = 'ascending';
+    this.entranceTimer = Date.now();
+    
+    // Position player off-screen at bottom
+    this.player.x = this.canvas.width / 2;
+    this.player.y = this.canvas.height + 100; // Start below screen
+    
+    // Disable shooting during entrance
+    this.entranceShootingDisabled = true;
+    
+    console.log('Entrance animation started');
+  }
+  
+  updateEntranceAnimation(dt) {
+    if (!this.isEntranceAnimation) return;
+    
+    const now = Date.now();
+    const elapsed = now - this.entranceTimer;
+    
+    if (this.entrancePhase === 'ascending') {
+      // Ascend from bottom to 25% from bottom
+      const targetY = this.canvas.height - (this.canvas.height * 0.25);
+      const ascentSpeed = 3; // Pixels per ms
+      
+      if (this.player.y > targetY) {
+        this.player.y -= ascentSpeed * (dt / 16);
+      } else {
+        // Reached target, show stage message
+        this.entrancePhase = 'stage_message';
+        this.entranceTimer = now;
+        this.stageMessage = `STAGE ${this.currentLevel}`;
+        this.stageMessageOpacity = 1;
+        console.log(`Stage ${this.currentLevel} message shown`);
+      }
+    } else if (this.entrancePhase === 'stage_message') {
+      // Flash message for 2 seconds
+      if (elapsed > 2000) {
+        this.entrancePhase = 'complete';
+        this.isEntranceAnimation = false;
+        this.entranceShootingDisabled = false;
+        
+        // Keep player at current position (no teleport - already at correct spot)
+        console.log('Entrance animation complete, game started');
+      } else {
+        // Flash effect (pulsing opacity)
+        this.stageMessageOpacity = 0.5 + Math.sin(elapsed * 0.01) * 0.5;
+      }
+    }
+  }
+  
+  // Spawn Volume Increase
+  updateSpawnVolumeIncrease() {
+    const now = Date.now();
+    
+    // Only increase during gameplay, not during boss
+    if (this.bossActive) return;
+    
+    // Check if 10 seconds have passed since last increase
+    if (now - this.lastVolumeIncreaseTime >= this.volumeIncreaseInterval) {
+      // Increase spawn volume
+      if (this.spawnVolumeIncrease < this.maxVolumeIncrease) {
+        this.spawnVolumeIncrease += 5; // 5% for shooting enemies
+        console.log(`Spawn volume increased to ${this.spawnVolumeIncrease}%`);
+        this.lastVolumeIncreaseTime = now;
+      }
+    }
+  }
+  
+  getSpawnRateMultiplier(enemyType) {
+    // Calculate spawn rate multiplier based on volume increase
+    // 5% for shooting enemies, 10% for non-shooting enemies
+    const baseMultiplier = 1 + (this.spawnVolumeIncrease / 100);
+    
+    if (enemyType === 'non-shooting') {
+      return baseMultiplier * 1.5;
+    }
+    return baseMultiplier;
   }
   
   gameLoop(currentTime) {
@@ -746,10 +1049,20 @@ class GameEngine {
       this.bossTimer = Math.max(0, this.bossSpawnTime - this.gameTime);
     }
     
+    // Update entrance animation (blocks normal gameplay until complete)
+    if (this.isEntranceAnimation) {
+      this.updateEntranceAnimation(dt);
+      return; // Skip all game logic during entrance
+    }
+    
+    // Update spawn volume increase every 10 seconds
+    this.updateSpawnVolumeIncrease();
+    
     this.handleInput();
     this.updatePlayer(dt);
     this.updateBullets(dt);
-    this.updateStars();
+    this.checkBossSpawn();
+    this.updateStars(dt);
     this.updateEnemies(dt);
     this.updateParticles(dt);
     this.updatePowerUps(dt);
@@ -802,6 +1115,9 @@ class GameEngine {
   shoot() {
     // Don't shoot if game is over
     if (this.isGameOver) return;
+    
+    // Don't shoot during entrance animation
+    if (this.entranceShootingDisabled) return;
     
     // Check for Super 2 power-up - fires in all 360 degrees!
     if (this.hasActivePowerUp('SUPER_MODE_2')) {
@@ -975,13 +1291,17 @@ class GameEngine {
   }
   
   updateEnemies(dt) {
-    // Time Freeze: Skip enemy updates if power-up is active
-    if (this.hasActivePowerUp('TIME_FREEZE')) {
-      return; // Enemies don't move or shoot
-    }
+    // Time Freeze is now handled per-enemy below (bosses are immune)
     
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
+      
+      // Time Freeze: Skip regular enemy updates if power-up is active (bosses immune)
+      if (!enemy.isBoss && this.hasActivePowerUp('TIME_FREEZE')) {
+        continue; // This enemy doesn't move or shoot
+      }
+      
+      // Boss special movement
       // enemy.y += enemy.speed; // Moved into if/else below for boss special handling
       
       // Boss special movement
@@ -1456,6 +1776,15 @@ class GameEngine {
     }
     
     this.player.hp--;
+    
+    // Reset player level to 0 when hit!
+    if (this.player.level > 0) {
+      const oldLevel = this.player.level;
+      this.player.level = 0;
+      console.log(`Player hit! Level ${oldLevel} → 0`);
+      this.loadPlayerShip(this.characterType); // Reload basic ship
+    }
+    
     this.player.invincible = 2000;
     this.createParticles(this.player.x, this.player.y, this.player.color, 20);
     this.callbacks.onPlayerHit?.(this.player.hp);
@@ -1956,6 +2285,15 @@ class GameEngine {
       return;
     }
     
+    // Handle COIN power-ups - instant score bonus
+    if (type === 'COIN_100' || type === 'COIN_1000' || type === 'COIN_10000') {
+      this.player.score += config.points;
+      this.callbacks.onScoreUpdate?.(this.player.score);
+      this.createParticles(powerUp.x, powerUp.y, config.color, 20);
+      console.log(`Collected ${config.name}: +${config.points} points!`);
+      return; // Don't activate as timed power-up
+    }
+    
     // Handle SUPER MODE - activates all power-ups at once!
     if (type === 'SUPER_MODE') {
       const now = Date.now();
@@ -1999,9 +2337,10 @@ class GameEngine {
   }
   
   activateScreenBomb() {
-    // Destroy all enemies on screen
+    // Destroy all enemies on screen (except boss - boss is immune)
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
+      if (enemy.isBoss) continue; // Boss is immune to screen bomb
       this.player.score += enemy.points;
       this.createExplosion(enemy.x, enemy.y, enemy.color, 30);
       this.enemies.splice(i, 1);
@@ -2196,51 +2535,86 @@ class GameEngine {
     ctx.shadowColor = '#FFE4B5';
     ctx.fillStyle = '#FFE4B5';
     
-    // Draw ally ship (smaller triangle)
+    // Draw ally ship (simple triangle for now)
     ctx.beginPath();
-    ctx.moveTo(0, -20);
-    ctx.lineTo(-15, 15);
-    ctx.lineTo(15, 15);
+    ctx.moveTo(0, -15);
+    ctx.lineTo(-10, 10);
+    ctx.lineTo(10, 10);
     ctx.closePath();
     ctx.fill();
+    
     ctx.restore();
+  }
+  
+  // Helper function to get boss configuration for current level
+  getBossConfig() {
+    const bossStage = Math.min(Math.floor(this.currentLevel / 2) + 1, 5);
+    const bossKey = `STAGE_${bossStage}`;
+    return BOSSES[bossKey] || BOSSES.STAGE_1;
   }
   
   spawnBoss() {
     this.bossActive = true;
-    const bossStage = Math.min(Math.floor(this.currentLevel / 2) + 1, 10);
+    const bossConfig = this.getBossConfig();
     
     const boss = {
       x: this.canvas.width / 2,
       y: -80,
       type: 'BOSS',
-      size: 160, // 200% larger (was 80, now 160)
-      speed: 2.0, // Faster initial movement
-      targetY: 150, // Stop at this Y position
-      hp: (20 + this.currentLevel * 5) * 4, // x4 health for harder fight
-      maxHp: (20 + this.currentLevel * 5) * 4, // x4 health for harder fight
-      points: 1000 * bossStage,
-      color: '#ff00ff',
+      size: bossConfig.size,
+      speed: bossConfig.speed,
+      targetY: bossConfig.targetY || 150,
+      hp: bossConfig.hp + (this.currentLevel * 5), // Scale HP with level
+      maxHp: bossConfig.maxHp + (this.currentLevel * 5),
+      points: bossConfig.points,
+      color: bossConfig.color,
       time: 0,
       wobblePhase: 0,
       lastShot: 0,
       canShoot: true,
-      shootRate: 2000, // Slower base fire rate for boss
+      shootRate: bossConfig.shootRate,
       isBoss: true,
       hasReachedPosition: false,
-      movementPhase: 0, // 0-3: side-to-side, 4: center, 5: dash
-      movementDirection: 1, // 1 = right, -1 = left
-      sideMovementCount: 0, // Count side movements (0-3 for 2 left + 2 right)
-      dashSpeed: 8, // Speed when dashing
+      movementPhase: 0,
+      movementDirection: 1,
+      sideMovementCount: 0,
+      dashSpeed: bossConfig.movementSpeed || 2.0,
       isDashing: false,
       dashTargetY: 0,
-      attackPattern: bossStage % 3, // 3 unique patterns per boss stage
+      attackPattern: bossConfig.attackPatterns || ['straight'],
+      attackPatternIndex: 0,
       rapidFireTimer: 0,
-      image: this.assetLoader.getImage(`boss-${bossStage}`)
+      bulletSpeed: bossConfig.bulletSpeed || 6,
+      bulletDamage: bossConfig.bulletDamage || 1,
+      hasSpecialAttack: bossConfig.hasSpecialAttack || false,
+      specialAttackInterval: bossConfig.specialAttackInterval || 0,
+      lastSpecialAttack: 0,
+      movementType: bossConfig.movementType || 'side-to-side',
+      name: bossConfig.name,
+      stage: bossConfig.stage,
+      image: this.assetLoader.getImage(bossConfig.imageKey)
     };
     
     this.enemies.push(boss);
-    this.callbacks.onBossSpawn?.(bossStage);
+    console.log(`Boss spawned: ${bossConfig.name} (Stage ${bossConfig.stage})`);
+    this.callbacks.onBossSpawn?.(bossConfig.stage);
+  }
+  
+  // Helper function to get boss configuration for current level
+  getBossConfig() {
+    const bossStage = Math.min(Math.floor(this.currentLevel / 2) + 1, 5);
+    const bossKey = `STAGE_${bossStage}`;
+    return BOSSES[bossKey] || BOSSES.STAGE_1;
+  }
+  
+  // Reset boss timer based on current boss configuration
+  resetBossTimer() {
+    const bossConfig = this.getBossConfig();
+    this.bossSpawnTime = bossConfig.spawnTime * 1000; // Convert seconds to milliseconds
+    this.bossTimer = this.bossSpawnTime;
+    this.gameTime = 0;
+    this.bossWarningShown = false;
+    console.log(`Boss timer reset: ${bossConfig.spawnTime}s (${bossConfig.name})`);
   }
   
   checkLevelProgress() {
@@ -2251,31 +2625,65 @@ class GameEngine {
     this.bossActive = false;
     this.currentLevel++;
     this.enemiesSpawned = 0;
-    // Reset boss timer for next level
-    this.bossTimer = this.bossSpawnTime;
-    this.gameTime = 0;
+    // Reset boss timer for next level using new boss config
+    this.resetBossTimer();
     this.callbacks.onLevelUp?.(this.currentLevel);
   }
   
   checkBossSpawn() {
-    // Boss spawns after 5 seconds of gameplay
-    if (this.bossTimer <= 0 && !this.bossActive) {
-      this.spawnBoss();
-      // Reset timer for next level
-      this.bossTimer = this.bossSpawnTime;
-      this.gameTime = 0;
-    } else if (this.bossTimer <= 2000 && !this.bossActive && !this.bossWarningShown) {
-      // Show warning when 2 seconds remaining
-      this.bossWarningShown = true;
-      this.callbacks.onBossWarning?.();
+    const bossConfig = this.getBossConfig();
+    const timeRemaining = Math.ceil(this.bossTimer / 1000);
+    
+    // Debug logging to track boss timer
+    if (this.gameTime > 0 && this.gameTime % 1000 < 20) {
+      console.log(`Boss Timer - gameTime: ${this.gameTime}ms, bossTimer: ${this.bossTimer}ms, timeRemaining: ${timeRemaining}s, bossActive: ${this.bossActive}`);
     }
     
-    // Reset warning flag when boss spawns
-    if (this.bossActive) {
-      this.bossWarningShown = false;
+    // Update callback every second with countdown
+    if (this.bossTimer > 0 && !this.bossActive) {
+      this.callbacks.onBossTimerUpdate?.(timeRemaining);
+    }
+    
+    // Boss spawns when timer reaches 0
+    if (this.bossTimer <= 0 && !this.bossActive) {
+      console.log(`⚠️ BOSS SPAWNING! bossTimer: ${this.bossTimer}, bossActive: ${this.bossActive}, gameTime: ${this.gameTime}`);
+      this.spawnBoss();
+      // Reset timer for next level
+      this.resetBossTimer();
+      this.bossWarningShown = false; // Reset warning flag
+      return;
+    }
+    
+    // Show warning at 30 seconds
+    if (this.bossTimer <= 30000 && this.bossTimer > 29000 && !this.bossActive) {
+      this.callbacks.onBossWarning?.({
+        time: 30,
+        message: `WARNING: ${bossConfig.name} approaches in 30 seconds!`,
+        bossName: bossConfig.name,
+        bossStage: bossConfig.stage
+      });
+    }
+    
+    // Show warning at 10 seconds
+    if (this.bossTimer <= 10000 && this.bossTimer > 9000 && !this.bossActive) {
+      this.callbacks.onBossWarning?.({
+        time: 10,
+        message: `WARNING: ${bossConfig.name} incoming in 10 seconds!`,
+        bossName: bossConfig.name,
+        bossStage: bossConfig.stage
+      });
+    } else if (this.bossTimer <= 5000 && !this.bossActive && !this.bossWarningShown) {
+      // Show final warning at 5 seconds (once only)
+      this.bossWarningShown = true;
+      this.callbacks.onBossWarning?.({
+        time: 5,
+        message: `⚠️ ${bossConfig.name} ARRIVING IN 5 SECONDS! ⚠️`,
+        bossName: bossConfig.name,
+        bossStage: bossConfig.stage,
+        isUrgent: true
+      });
     }
   }
-  
   getBossTimer() {
     return Math.max(0, Math.ceil(this.bossTimer / 1000)); // Return in seconds
   }
@@ -2289,6 +2697,35 @@ class GameEngine {
     
     // Draw stars background
     this.drawStars();
+    
+    // Draw stage message during entrance animation
+    if (this.isEntranceAnimation && this.entrancePhase === 'stage_message') {
+      ctx.save();
+      ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+      
+      // Glowing text effect
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = '#FFD700';
+      ctx.fillStyle = `rgba(255, 215, 0, ${this.stageMessageOpacity})`;
+      ctx.font = 'bold 72px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Flash effect
+      const flashScale = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+      ctx.scale(flashScale, flashScale);
+      
+      ctx.fillText(this.stageMessage, 0, 0);
+      
+      // Outer glow ring
+      ctx.strokeStyle = `rgba(255, 215, 0, ${this.stageMessageOpacity * 0.5})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, 200, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.restore();
+    }
     
     // Draw particles
     this.particles.forEach(p => {

@@ -223,6 +223,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     // Load player ship image
     await engine.loadPlayerShip(charType);
     
+    // Reset game state (includes boss timer initialization)
+    engine.reset();
+    
     // Start the game
     engine.start();
   }, []);
