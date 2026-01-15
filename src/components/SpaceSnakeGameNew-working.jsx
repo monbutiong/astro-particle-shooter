@@ -186,13 +186,13 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
           zIndex: 10
         }}>
           <div style={{ color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
               Score: {score.toLocaleString()}
             </div>
-            <div style={{ fontSize: '14px' }}>
-              Lives: {'❤️'.repeat(Math.max(0, lives))}
+            <div style={{ fontSize: '18px' }}>
+              Lives: {'â¤ï¸'.repeat(Math.max(0, lives))}
             </div>
-            <div style={{ fontSize: '14px', marginTop: '5px' }}>
+            <div style={{ fontSize: '16px', marginTop: '5px' }}>
               Level: {level}
             </div>
           </div>
@@ -312,8 +312,7 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                 borderColor: characterColors[characterType] || '#4488ff',
                 boxShadow: `0 0 50px ${(characterColors[characterType] || '#4488ff')}60, 0 20px 50px rgba(0, 0, 0, 0.8)`,
                 position: 'relative',
-                overflow: 'hidden',
-                textAlign: 'center'
+                overflow: 'hidden'
               }}>
                 {/* Animated background glow */}
                 <div style={{
@@ -363,7 +362,6 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                 {/* Character Name - Larger */}
                 <h3 style={{
                   fontSize: '32px',
-                  textAlign: 'center',
                   fontWeight: 'bold',
                   margin: '0 0 8px 0',
                   color: characterColors[characterType] || '#4488ff',
@@ -385,9 +383,8 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   color: '#fff',
                   cursor: 'pointer',
                   textTransform: 'uppercase',
-                  letterSpacing: '1px',
+                  letterSpacing: '3px',
                   boxShadow: '0 10px 30px rgba(255, 68, 255, 0.6)',
-                  width: '100%',
                   transition: 'all 0.3s ease',
                   position: 'relative',
                   overflow: 'hidden'
@@ -401,7 +398,7 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   e.target.style.boxShadow = '0 8px 25px rgba(255, 68, 255, 0.5)';
                 }}
               >
-                Change Character
+                ðŸŽ¨ Change Character
               </button>
             </div>
             
@@ -420,13 +417,13 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                 textShadow: '0 0 15px rgba(255, 255, 255, 0.5)',
                 textAlign: 'center'
               }}>
-                Ship Evolution
+                âš™ï¸ Ship Evolution
               </div>
-                
-                {/* Evolution Grid - Vertical Stack (1 per row) */}
+              
+                {/* 2x2 Evolution Grid */}
                 <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
                   gap: '10px'
                 }}>
                   {/* Evolution Stage 0 - Basic */}
@@ -435,9 +432,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   alignItems: 'center',
                   gap: '12px',
                   padding: '12px',
-                                    background: 'rgba(136, 136, 136, 0.15)',
+                    background: 'rgba(136, 136, 136, 0.15)',
                     borderRadius: '12px',
-                                      border: '2px solid rgba(136, 136, 136, 0.3)',
+                    border: '2px solid rgba(136, 136, 136, 0.3)',
                     animation: 'float 3s ease-in-out infinite'
                   }}>
                     <div style={{
@@ -482,27 +479,10 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                     </div>
                   </div>
                   <div style={{
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    color: '#ffcc00',
-                    background: 'transparent',
-                    padding: '4px 8px',
-                    borderRadius: '20px',
-                    whiteSpace: 'nowrap',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
+                    fontSize: '18px',
+                    color: '#ffcc00'
                   }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: 'radial-gradient(circle, #ffffff 30%, rgba(255, 255, 255, 0.6) 60%, transparent 70%)',
-                      boxShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4)',
-                      animation: 'pulse 2s ease-in-out infinite'
-                    }} />
-                    1 Bullet
+                    🔴
                   </div>
                 </div>
                 
@@ -512,9 +492,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   alignItems: 'center',
                   gap: '12px',
                   padding: '12px',
-                                    background: 'rgba(68, 255, 136, 0.1)',
+                    background: 'rgba(68, 255, 136, 0.1)',
                     borderRadius: '12px',
-                                      border: '2px solid rgba(68, 255, 136, 0.3)',
+                    border: '2px solid rgba(68, 255, 136, 0.3)',
                     animation: 'float 3s ease-in-out infinite',
                     animationDelay: '0.5s'
                   }}>
@@ -560,27 +540,10 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                     </div>
                   </div>
                   <div style={{
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    color: '#ffcc00',
-                    background: 'transparent',
-                    padding: '4px 8px',
-                    borderRadius: '20px',
-                    whiteSpace: 'nowrap',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
+                    fontSize: '18px',
+                    color: '#ffcc00'
                   }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: 'radial-gradient(circle, #ffffff 30%, rgba(255, 255, 255, 0.6) 60%, transparent 70%)',
-                      boxShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4)',
-                      animation: 'pulse 2s ease-in-out infinite'
-                    }} />
-                    2 Bullets
+                    🔴🔴
                   </div>
                 </div>
                 
@@ -590,9 +553,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   alignItems: 'center',
                   gap: '12px',
                   padding: '12px',
-                                    background: 'rgba(255, 204, 0, 0.1)',
+                    background: 'rgba(255, 204, 0, 0.1)',
                     borderRadius: '12px',
-                                      border: '2px solid rgba(255, 204, 0, 0.3)',
+                    border: '2px solid rgba(255, 204, 0, 0.3)',
                     animation: 'float 3s ease-in-out infinite',
                     animationDelay: '1s'
                   }}>
@@ -638,49 +601,31 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                     </div>
                   </div>
                   <div style={{
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    color: '#ffcc00',
-                    background: 'transparent',
-                    padding: '4px 8px',
-                    borderRadius: '20px',
-                    whiteSpace: 'nowrap',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
+                    fontSize: '18px',
+                    color: '#ffcc00'
                   }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: 'radial-gradient(circle, #ffffff 30%, rgba(255, 255, 255, 0.6) 60%, transparent 70%)',
-                      boxShadow: '0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.4)',
-                      animation: 'pulse 2s ease-in-out infinite'
-                    }} />
-                    3 Bullets
+                    🔴🔴🔴
                   </div>
                 </div>
                 
-
                 {/* Evolution Stage 3 - Ultimate */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
                   padding: '12px',
-                  background: 'rgba(255, 68, 255, 0.15)',
-                  borderRadius: '12px',
-                  border: '3px solid rgba(255, 68, 255, 0.5)',
-                  animation: 'float 3s ease-in-out infinite',
-                  animationDelay: '1.5s',
-                  boxShadow: '0 0 25px rgba(255, 68, 255, 0.6)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
+                    background: 'rgba(255, 68, 255, 0.15)',
+                    borderRadius: '12px',
+                    border: '3px solid rgba(255, 68, 255, 0.5)',
+                    animation: 'float 3s ease-in-out infinite',
+                    animationDelay: '1.5s',
+                    boxShadow: '0 0 25px rgba(255, 68, 255, 0.6)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
@@ -688,13 +633,13 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                     animation: 'level3Glow 2s ease-in-out infinite',
                     pointerEvents: 'none'
                   }} />
-                  
-                  <div style={{
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '10px',
-                    background: 'rgba(255, 68, 255, 0.2)',
-                    border: '3px solid #ff44ff',
+                      
+                    <div style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 68, 255, 0.2)',
+                      border: '3px solid #ff44ff',
                     boxShadow: '0 0 25px rgba(255, 68, 255, 0.8)',
                     display: 'flex',
                     alignItems: 'center',
@@ -731,31 +676,16 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                       display: window.innerWidth < 480 ? 'none' : 'block'
                     }}>
                       Ultimate
-                    </div>
-                  </div>
-                  <div style={{
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    color: '#ff4444',
-                    background: 'transparent',
-                    padding: '4px 8px',
-                    borderRadius: '20px',
-                    whiteSpace: 'nowrap',
-                    border: '2px solid rgba(255, 68, 68, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '50%',
-                      background: 'radial-gradient(circle, #ff4444 30%, rgba(255, 68, 68, 0.6) 60%, transparent 70%)',
-                      boxShadow: '0 0 10px rgba(255, 68, 68, 0.8), 0 0 20px rgba(255, 68, 68, 0.4)',
-                      animation: 'pulse 2s ease-in-out infinite'
-                    }} />
-                    MAX LEVEL
-                  </div>
+                 </div>
+                 <div style={{
+                   fontSize: '18px',
+                   color: '#ff4444',
+                   animation: 'pulse 1s ease-in-out infinite',
+                   lineHeight: '1.2'
+                 }}>
+                   <div>🔴🔴</div>
+                   <div>🔴🔴</div>
+                 </div>
                 </div>
               </div>
             </div>
@@ -806,6 +736,7 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
               onMouseUp={(e) => {
                 e.target.style.transform = 'translateY(-2px) scale(1.05)'
                 e.target.style.boxShadow = '0 8px 25px rgba(0, 153, 255, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.3)'
+              }}
               }}
             >
               <span style={{

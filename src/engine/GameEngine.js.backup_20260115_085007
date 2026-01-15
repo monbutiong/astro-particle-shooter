@@ -1638,15 +1638,9 @@ class GameEngine {
       
       // Draw player ship image or fallback to triangle
       if (this.player.shipImage && this.player.shipImage.complete) {
-        // Get natural image dimensions to maintain aspect ratio
-        const naturalWidth = this.player.shipImage.naturalWidth;
-        const naturalHeight = this.player.shipImage.naturalHeight;
-        const aspectRatio = naturalWidth / naturalHeight;
-        
-        // Base size on height to match ready screen (60px tall)
-        const shipHeight = 60;
-        const shipWidth = shipHeight * aspectRatio;
-        
+        // Maintain aspect ratio: width based on player.width, height is taller (not fat!)
+        const shipWidth = this.player.width * 1.5; // ~75px wide
+        const shipHeight = this.player.height * 1.5; // ~90px tall (taller than wide)
         ctx.drawImage(
           this.player.shipImage,
           -shipWidth / 2,
