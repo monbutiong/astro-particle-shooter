@@ -21,7 +21,8 @@ const GAME_CONFIG = {
   SPAWN_RATE: 1500,
   BOSS_SPAWN_LEVEL: 5,
   DIFFICULTY_SCALE: 1.1,
-  BOSS_SPAWN_TIME: 60000 // Boss spawns after 60 seconds (60000ms)
+  BOSS_SPAWN_TIME: 60000, // Boss spawns after 60 seconds (60000ms)
+  BOSS_WARNING_TIME: 6000 // Show warning 6 seconds before boss appears
 };
 
 // ==================== BOSS CONFIGURATION ====================
@@ -2654,30 +2655,13 @@ class GameEngine {
       return;
     }
     
-    // Show warning at 30 seconds
-    if (this.bossTimer <= 30000 && this.bossTimer > 29000 && !this.bossActive) {
-      this.callbacks.onBossWarning?.({
-        time: 30,
-        message: `WARNING: ${bossConfig.name} approaches in 30 seconds!`,
-        bossName: bossConfig.name,
-        bossStage: bossConfig.stage
-      });
-    }
-    
-    // Show warning at 10 seconds
-    if (this.bossTimer <= 10000 && this.bossTimer > 9000 && !this.bossActive) {
-      this.callbacks.onBossWarning?.({
-        time: 10,
-        message: `WARNING: ${bossConfig.name} incoming in 10 seconds!`,
-        bossName: bossConfig.name,
-        bossStage: bossConfig.stage
-      });
-    } else if (this.bossTimer <= 5000 && !this.bossActive && !this.bossWarningShown) {
-      // Show final warning at 5 seconds (once only)
+    // Show warning only at configured time (6 seconds before boss)
+    const warningTime = GAME_CONFIG.BOSS_WARNING_TIME;
+    if (this.bossTimer <= warningTime && this.bossTimer > warningTime - 1000 && !this.bossActive && !this.bossWarningShown) {
       this.bossWarningShown = true;
       this.callbacks.onBossWarning?.({
-        time: 5,
-        message: `⚠️ ${bossConfig.name} ARRIVING IN 5 SECONDS! ⚠️`,
+        time: warningTime / 1000, // 6 seconds
+        message: `⚠ ${bossConfig.name} INCOMING! ⚠`,
         bossName: bossConfig.name,
         bossStage: bossConfig.stage,
         isUrgent: true
@@ -2721,7 +2705,7 @@ class GameEngine {
       ctx.strokeStyle = `rgba(255, 215, 0, ${this.stageMessageOpacity * 0.5})`;
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(0, 0, 200, 0, Math.PI * 2);
+      ctx.arc(0, 0, 120, 0, Math.PI * 2);
       ctx.stroke();
       
       ctx.restore();

@@ -337,21 +337,54 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
               />
             </div>
             
-            {bossWarning && (
-              <div style={{
-                background: 'rgba(255, 68, 68, 0.9)',
-                padding: '10px 20px',
-                borderRadius: '10px',
-                animation: 'warningPulse 1s ease-in-out infinite'
-              }}>
-                <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
-                  âš ï¸ BOSS INCOMING!
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffcc00' }}>
-                  {bossTimer}s
-                </div>
-              </div>
-            )}
+            {/* Boss warning removed from HUD - only showing in center */}
+          </div>
+        </div>
+      )}
+      
+      {/* Boss Warning Overlay - Centered on screen - 30% of original size */}
+      {gameState === 'playing' && bossWarning && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 100,
+          textAlign: 'center',
+          animation: 'bossWarningPulse 0.5s ease-in-out infinite'
+        }}>
+          {/* Warning Icon - 30% of original (80px * 0.3 = 24px) */}
+          <div style={{
+            fontSize: '24px',
+            marginBottom: '6px',
+            textShadow: '0 0 15px rgba(255, 68, 68, 0.6), 0 0 30px rgba(255, 68, 68, 0.4)',
+            animation: 'warningIconShake 0.3s ease-in-out infinite'
+          }}>
+            ⚠
+          </div>
+          
+          {/* Boss Name - 30% of original (48px * 0.3 = 14.4px) */}
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: '#ff4444',
+            textShadow: '0 0 10px rgba(255, 68, 68, 0.6), 0 0 20px rgba(255, 68, 68, 0.4), 2px 2px 4px rgba(0, 0, 0, 0.8)',
+            marginBottom: '3px',
+            letterSpacing: '1px'
+          }}>
+            {bossWarning.bossName}
+          </div>
+          
+          {/* INCOMING Text - 30% of original (64px * 0.3 = 19.2px) */}
+          <div style={{
+            fontSize: '19px',
+            fontWeight: 'bold',
+            color: '#ffcc00',
+            textShadow: '0 0 15px rgba(255, 204, 0, 0.6), 0 0 30px rgba(255, 204, 0, 0.4), 2px 2px 4px rgba(0, 0, 0, 0.8)',
+            letterSpacing: '4px',
+            animation: 'textFlash 0.5s ease-in-out infinite alternate'
+          }}>
+            INCOMING!
           </div>
         </div>
       )}
@@ -1101,10 +1134,22 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
               0%, 100% { transform: translateX(0); }
               10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
               20%, 40%, 60%, 80% { transform: translateX(3px); }
-            }
             @keyframes avatarGlow {
               0%, 100% { box-shadow: 0 0 15px currentColor; }
               50% { box-shadow: 0 0 30px currentColor, 0 0 45px currentColor; }
+            }
+            @keyframes bossWarningPulse {
+              0%, 100% { transform: translate(-50%, -50%) scale(1); }
+              50% { transform: translate(-50%, -50%) scale(1.05); }
+            }
+            @keyframes warningIconShake {
+              0%, 100% { transform: rotate(0deg); }
+              25% { transform: rotate(-10deg); }
+              75% { transform: rotate(10deg); }
+            }
+            @keyframes textFlash {
+              0% { opacity: 1; }
+              100% { opacity: 0.7; text-shadow: 0 0 40px rgba(255, 204, 0, 1), 0 0 80px rgba(255, 204, 0, 0.8); }
             }
           `}</style>
         </div>
