@@ -374,7 +374,20 @@ class GameEngine {
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.callbacks = callbacks;
     
+    // Character type (blue, red, yellow, pink) - will be set when ship is loaded
+    this.characterType = 'blue'; // Default
+    
+    // Character color mapping
+    this.characterColors = {
+      blue: '#4488ff',
+      red: '#ff4444',
+      yellow: '#ffff44',
+      pink: '#ff44ff'
+    };
+    
     // Set canvas to fullscreen (like old version)
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
     
@@ -534,20 +547,46 @@ class GameEngine {
   }
   
   loadPlayerShip(characterType) {
-    // Load player ship image based on character
+    // Load player ship image based on character AND level
+    this.characterType = characterType; // Store character type
+    this.player.color = this.characterColors[characterType] || this.characterColors.blue; // Set player color
+    const level = this.player.level || 0;
     const shipPaths = {
-      blue: '/assets/player/blue-ship.fw.png',
-      red: '/assets/player/red-ship.fw.png',
-      yellow: '/assets/player/yellow-ship.fw.png',
-      pink: '/assets/player/pink-ship.fw.png'
+      blue: [
+        '/assets/player/blue-level-0.fw.png',  // Level 0 (basic)
+        '/assets/player/blue-level-1.fw.png',  // Level 1 (double shot)
+        '/assets/player/blue-level-2.fw.png',  // Level 2 (triple shot)
+        '/assets/player/blue-level-3.fw.png'   // Level 3 (quad shot)
+      ],
+      red: [
+        '/assets/player/red-level-0.fw.png',
+        '/assets/player/red-level-1.fw.png',
+        '/assets/player/red-level-2.fw.png',
+        '/assets/player/red-level-3.fw.png'
+      ],
+      yellow: [
+        '/assets/player/yellow-level-0.fw.png',
+        '/assets/player/yellow-level-1.fw.png',
+        '/assets/player/yellow-level-2.fw.png',
+        '/assets/player/yellow-level-3.fw.png'
+      ],
+      pink: [
+        '/assets/player/pink-level-0.fw.png',
+        '/assets/player/pink-level-1.fw.png',
+        '/assets/player/pink-level-2.fw.png',
+        '/assets/player/pink-level-3.fw.png'
+      ]
     };
     
-    const shipPath = shipPaths[characterType] || shipPaths.blue;
+    const shipPathArray = shipPaths[characterType] || shipPaths.blue;
+    const shipPath = shipPathArray[Math.min(level, 3)]; // Cap at level 3
+    
     const img = new Image();
     
     return new Promise((resolve, reject) => {
       img.onload = () => {
         this.player.shipImage = img;
+        console.log(`Loaded ${characterType} ship level ${level}: ${shipPath}`);
         resolve(img);
       };
       img.onerror = () => {
@@ -636,6 +675,7 @@ class GameEngine {
     this.player.score = 0;
     this.player.hp = 3;
     this.player.invincible = 0;
+    this.player.level = 0; // Reset level to 0 (basic ship)
     this.bossTimer = this.bossSpawnTime;
     this.gameTime = 0;
     this.bossActive = false;
@@ -791,18 +831,52 @@ class GameEngine {
     const bulletColor = this.hasActivePowerUp('DOUBLE_DAMAGE') ? '#00FF00' : this.player.color;
     const isHoming = this.hasActivePowerUp('HOMING_MISSILES');
     
-    // Triple Shot: Fire 3 bullets in spread pattern
-    const bulletCount = this.hasActivePowerUp('TRIPLE_SHOT') ? 3 : 1;
+    // Determine bullet count based on player level and TRIPLE_SHOT power-up
+    // Level 0: 1 bullet (basic)
+    // Level 1: 2 bullets (double straight line)
+    // Level 2: 3 bullets (triple straight line)
+    // Level 3: 4 bullets (quad straight line)
+    // TRIPLE_SHOT power-up adds +1 bullet to base level count
+    let bulletCount = this.player.level + 1; // Level 0=1, Level 1=2, Level 2=3, Level 3=4
+    
+    // TRIPLE_SHOT power-up adds 1 extra bullet
+    if (this.hasActivePowerUp('TRIPLE_SHOT')) {
+      bulletCount += 1;
+    }
     
     for (let i = 0; i < bulletCount; i++) {
       const bullet = this.bulletPool.get();
-      bullet.x = this.player.x;
-      bullet.y = this.player.y - this.player.height / 2;
       
-      // Calculate angle for spread
+      // Calculate angle for spread (straight line for level upgrades)
       let angle = 0;
-      if (bulletCount === 3) {
-        angle = (i - 1) * 0.3; // -0.3, 0, 0.3 radians
+      let xOffset = 0;
+      let yOffset = 0;
+      
+      if (this.hasActivePowerUp('TRIPLE_SHOT')) {
+        // TRIPLE_SHOT: Use spread pattern with angle
+        angle = (i - 1) * 0.3; // -0.3, 0, 0.3 radians (spread pattern)
+        bullet.x = this.player.x;
+        bullet.y = this.player.y - this.player.height / 2;
+      } else {
+        // Level-based firing: straight line with horizontal spacing
+        // Level 0: 1 bullet (center)
+        // Level 1: 2 bullets (left + right)
+        // Level 2: 3 bullets (left, center, right)
+        // Level 3: 4 bullets (left, center-left, center-right, right)
+        const spacing = 12; // Horizontal spacing between bullets in pixels
+        
+        if (bulletCount === 1) {
+          xOffset = 0;
+        } else if (bulletCount === 2) {
+          xOffset = (i - 0.5) * spacing; // -6, +6
+        } else if (bulletCount === 3) {
+          xOffset = (i - 1) * spacing; // -12, 0, +12
+        } else if (bulletCount >= 4) {
+          xOffset = (i - 1.5) * spacing; // -18, -6, +6, +18
+        }
+        
+        bullet.x = this.player.x + xOffset;
+        bullet.y = this.player.y - this.player.height / 2;
       }
       
       bullet.vx = Math.sin(angle) * 10;
@@ -1949,11 +2023,23 @@ class GameEngine {
   activateLevelUp() {
     if (this.player.level < 3) {
       this.player.level++;
-      this.callbacks.onLevelUp?.(this.player.level);
       console.log(`Level Up! Now at level ${this.player.level}`);
       
-      // Update player ship image
+      // EPIC level-up explosion effect!
+      this.createExplosion(this.player.x, this.player.y, this.player.color, 40);
+      this.screenFlash = 0.5; // Screen flash effect
+      
+      // Load upgraded ship image (level-based)
       this.loadPlayerShip(this.characterType);
+      
+      // Notify React of level up for avatar reaction
+      this.callbacks.onLevelUp?.(this.player.level);
+      this.callbacks.onPowerUpActivated?.('LEVEL_UP');
+      this.callbacks.onAvatarStateChange?.('power-up');
+      
+      // Log new fire pattern
+      const patterns = ['SINGLE', 'DOUBLE', 'TRIPLE', 'QUAD'];
+      console.log(`Fire Pattern: ${patterns[this.player.level]}`);
     } else {
       // Already at max level, give extra points instead
       this.player.score += 5000;
