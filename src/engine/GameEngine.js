@@ -631,7 +631,7 @@ class GameEngine {
           }
         } else {
           // Dynamic boss movement pattern
-          const sideSpeed = 3; // Speed for side-to-side movement
+          const sideSpeed = 2.7; // Speed for side-to-side movement (reduced by 10%)
           const margin = 100; // Margin from edges
           
           if (enemy.movementPhase === 0) {
@@ -833,7 +833,7 @@ class GameEngine {
           const baseAngle = Math.atan2(dy, dx);
           const spreadAngle = baseAngle + (i * 0.2); // Spread by 0.2 radians
           
-          const speed = 6;
+          const speed = 5.4; // Reduced by 10%
           bullet.vx = Math.cos(spreadAngle) * speed;
           bullet.vy = Math.sin(spreadAngle) * speed;
           bullet.active = true;
@@ -863,7 +863,7 @@ class GameEngine {
             const dx = this.player.x - boss.x;
             const dy = this.player.y - boss.y;
             const angle = Math.atan2(dy, dx);
-            const speed = 8;
+            const speed = 7.2; // Reduced by 10%
             
             bullet.vx = Math.cos(angle) * speed;
             bullet.vy = Math.sin(angle) * speed;
@@ -891,7 +891,7 @@ class GameEngine {
           bullet.y = boss.y + boss.size / 2;
           
           const angle = (Math.PI * 2 / bulletCount) * i;
-          const speed = 5;
+          const speed = 4.5; // Reduced by 10%
           
           bullet.vx = Math.cos(angle) * speed;
           bullet.vy = Math.sin(angle) * speed;
