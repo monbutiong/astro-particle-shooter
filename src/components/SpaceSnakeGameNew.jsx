@@ -152,6 +152,10 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
       setGameState('gameover');
       setAvatarState('defeated');
     },
+    onBossSpawn: (bossStage) => {
+      // Hide boss warning when boss spawns
+      setBossWarning(null);
+    },
     onPlayerHit: (remainingHp) => {
       console.log('Player hit! Remaining HP:', remainingHp);
       setLives(remainingHp);
@@ -189,7 +193,18 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
       // Show scared expression when boss is coming
       if (warning) {
         setAvatarState('scared');
+        // Auto-hide warning after 8 seconds (failsafe)
+        setTimeout(() => setBossWarning(null), 8000);
+      } else {
+        // Return to normal when warning is cleared
+        if (lives > 1) {
+          setAvatarState('normal');
+        }
       }
+    },
+    onStageChange: (newStage) => {
+      console.log('Stage changed to:', newStage);
+      setLevel(newStage);
     },
     onBossTimerUpdate: (timer) => {
       setBossTimer(timer);

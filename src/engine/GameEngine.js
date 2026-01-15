@@ -2629,6 +2629,36 @@ class GameEngine {
     // Reset boss timer for next level using new boss config
     this.resetBossTimer();
     this.callbacks.onLevelUp?.(this.currentLevel);
+    
+    // Clear all enemies and bullets for stage transition
+    this.enemies = [];
+    this.bullets = [];
+    
+    // Start stage transition animation
+    this.startStageTransition();
+  }
+  
+  startStageTransition() {
+    // Trigger entrance animation for next stage
+    this.isEntranceAnimation = true;
+    this.entrancePhase = 'ascending';
+    this.entranceTimer = Date.now();
+    
+    // Position player off-screen at bottom
+    this.player.x = this.canvas.width / 2;
+    this.player.y = this.canvas.height + 100; // Start below screen
+    
+    // Disable shooting during entrance
+    this.entranceShootingDisabled = true;
+    
+    // Reset spawn volume increase for new stage (optional difficulty scaling)
+    this.spawnVolumeIncrease = Math.min(this.spawnVolumeIncrease + 10, 100); // Increase by 10%
+    this.lastVolumeIncreaseTime = Date.now();
+    
+    console.log(`Stage transition: STAGE ${this.currentLevel}`);
+    
+    // Notify React component of stage change
+    this.callbacks.onStageChange?.(this.currentLevel);
   }
   
   checkBossSpawn() {
@@ -2649,6 +2679,8 @@ class GameEngine {
     if (this.bossTimer <= 0 && !this.bossActive) {
       console.log(`⚠️ BOSS SPAWNING! bossTimer: ${this.bossTimer}, bossActive: ${this.bossActive}, gameTime: ${this.gameTime}`);
       this.spawnBoss();
+      // Hide boss warning when boss spawns
+      this.callbacks.onBossWarning?.(null); // Clear the warning
       // Reset timer for next level
       this.resetBossTimer();
       this.bossWarningShown = false; // Reset warning flag
