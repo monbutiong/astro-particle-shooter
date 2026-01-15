@@ -149,6 +149,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
       // Show "STAGE X Clear" message immediately
       setStageCompleted(clearedStage);
     },
+    onStageClearComplete: () => {
+      setStageCompleted(null); // Clear the message when sequence completes
+    },
     onGameOver: (finalScoreValue) => {
       setFinalScore(finalScoreValue);
       if (finalScoreValue > highScore) {

@@ -2725,10 +2725,10 @@ class GameEngine {
     this.stageClearTimer = Date.now();
     this.stageClearProgress = 0;
     
-    console.log(`✅ isStageClearing set to: ${this.isStageClearing}`);
-    console.log(`✅ stageClearPhase: ${this.stageClearPhase}`);
+    this.stageClearTimer = Date.now();
+    this.stageClearProgress = 0;
     
-    // Show "STAGE X Clear" message immediately
+    // Show "STAGE X Clear" message immediately (will be cleared after 2s)
     this.callbacks.onStageCleared?.(this.currentLevel);
     console.log(`✅ Called onStageCleared callback for stage ${this.currentLevel}`);
     
@@ -2820,6 +2820,7 @@ class GameEngine {
         this.enemiesSpawned = 0;
         this.currentLevel++;
         this.resetBossTimer();
+        this.callbacks.onStageClearComplete?.(); // Clear the message!
         this.callbacks.onLevelUp?.(this.currentLevel);
         
         // Restore player data (score and hp only)
