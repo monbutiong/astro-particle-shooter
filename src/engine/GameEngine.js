@@ -203,6 +203,170 @@ const ENEMY_TYPES = {
   }
 };
 
+// ==================== POWER-UP TYPES ====================
+const POWERUP_TYPES = {
+  TRIPLE_SHOT: {
+    name: 'Triple Shot',
+    icon: 'fire-3-direction-bullets.png',
+    duration: 12000, // 12 seconds
+    color: '#FF6600',
+    rarity: 'common'
+  },
+  EXTRA_LIFE: {
+    name: 'Extra Life',
+    icon: 'additional-life.fw.png',
+    duration: 0, // Permanent until hit
+    color: '#FF69B4',
+    rarity: 'common'
+  },
+  SCREEN_BOMB: {
+    name: 'Screen Bomb',
+    icon: 'bomb-all-enemy-in-the-screen.fw.png',
+    duration: 0, // Instant effect
+    color: '#FF0000',
+    rarity: 'very_rare'
+  },
+  INVINCIBILITY: {
+    name: 'Invincibility',
+    icon: 'defense-imunity.fw.png',
+    duration: 6000, // 6 seconds
+    color: '#FFD700',
+    rarity: 'rare'
+  },
+  TIME_FREEZE: {
+    name: 'Time Freeze',
+    icon: 'freeze-enemy.fw.png',
+    duration: 5000, // 5 seconds
+    color: '#00BFFF',
+    rarity: 'rare'
+  },
+  DOUBLE_DAMAGE: {
+    name: 'Double Damage',
+    icon: 'green-fire-double-damage.fw.png',
+    duration: 10000, // 10 seconds
+    color: '#00FF00',
+    rarity: 'uncommon'
+  },
+  LEVEL_UP: {
+    name: 'Level Up',
+    icon: 'level-up-spaceship.png',
+    duration: 0, // Permanent until hit
+    color: '#FF00FF',
+    rarity: 'rare' // Increased from 'very_rare' to 'rare' (doubled spawn rate)
+  },
+  HOMING_MISSILES: {
+    name: 'Homing Missiles',
+    icon: 'lock-bullets-to-enemy.fw.png',
+    duration: 8000, // 8 seconds
+    color: '#FF1493',
+    rarity: 'uncommon'
+  },
+  ORBIT_SHIELD: {
+    name: 'Orbit Shield',
+    icon: '2-balls-circle-on-player.fw.png',
+    duration: 12000, // 12 seconds
+    color: '#00FFFF',
+    rarity: 'rare'
+  },
+  ALLY_SUPPORT: {
+    name: 'Ally Support',
+    icon: 'one-of-other-charater-will-appear-to-help.fw.png',
+    duration: 12000, // 12 seconds
+    color: '#FFE4B5',
+    rarity: 'legendary'
+  },
+  SUPER_MODE: {
+    name: 'Super Mode',
+    icon: 'super-1.fw.png',
+    duration: 7000, // 7 seconds
+    color: '#FF4500',
+    rarity: 'legendary',
+    isLegendary: true
+  },
+  SUPER_MODE_2: {
+    name: 'Super Mode 2',
+    icon: 'super-2.fw.png',
+    duration: 8000, // 8 seconds
+    color: '#FFD700',
+    rarity: 'legendary',
+    isLegendary: true
+  }
+};
+
+// ==================== POWER-UP CLASS ====================
+class PowerUp {
+  constructor(x, y, type) {
+    this.x = x;
+    this.y = y;
+    this.type = type;
+    this.config = POWERUP_TYPES[type];
+    this.size = 12; // Reduced to 30% of original size (40 * 0.3 = 12)
+    this.active = true;
+    this.pulsePhase = Math.random() * Math.PI * 2;
+    this.angle = 0;
+  }
+
+  update(dt) {
+    // Pulsing animation
+    this.pulsePhase += dt * 3;
+    this.angle += dt * 2;
+
+    // Slowly fall down
+    this.y += 1;
+
+    // Deactivate if off screen
+    if (this.y > window.innerHeight + 50) {
+      this.active = false;
+    }
+  }
+
+  render(ctx) {
+    if (!this.active) return;
+
+    const pulse = Math.sin(this.pulsePhase) * 0.2 + 1;
+    const size = this.size * pulse;
+
+    ctx.save();
+    ctx.translate(this.x, this.y);
+
+    // Glow effect
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = this.config.color;
+
+    // Rotating background
+    ctx.rotate(this.angle);
+    ctx.fillStyle = this.config.color + '40'; // 25% opacity
+    ctx.beginPath();
+    ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    // Draw power-up icon
+    const icon = this.game?.assetLoader?.getImage(`powerup-${this.type}`);
+    if (icon) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.drawImage(icon, -size / 2, -size / 2, size, size);
+      ctx.restore();
+    } else {
+      // Fallback: draw colored circle with letter
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.fillStyle = this.config.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, size / 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${size / 2}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.config.name[0], 0, 0);
+      ctx.restore();
+    }
+  }
+}
+
 // ==================== GAME ENGINE ====================
 class GameEngine {
   constructor(canvas, callbacks) {
@@ -236,6 +400,10 @@ class GameEngine {
     this.player = {
       x: this.canvas.width / 2,
       y: this.canvas.height - 100,
+      // Active power-ups with expiration times
+      activePowerUps: {}, // { TRIPLE_SHOT: expirationTime, ... }
+      permanentPowerUps: [], // ['EXTRA_LIFE', 'LEVEL_UP']
+      
       width: 50,
       height: 60,
       speed: 8,
@@ -256,6 +424,9 @@ class GameEngine {
     this.enemies = [];
     this.particles = [];
     this.powerUps = [];
+    
+    // Orbit shield balls
+    this.orbitBalls = [];
     
     // Object pools
     this.bulletPool = new ObjectPool(() => ({
@@ -287,6 +458,9 @@ class GameEngine {
     this.currentLevel = 1;
     this.enemiesSpawned = 0;
     this.enemies = [];
+    
+    // Power-up system
+    this.activePowerUps = []; // Array of PowerUp objects
     
     // CRITICAL: Setup input listeners for keyboard/mouse/touch!
     this.setupInputListeners();
@@ -362,10 +536,10 @@ class GameEngine {
   loadPlayerShip(characterType) {
     // Load player ship image based on character
     const shipPaths = {
-      blue: '/src/assets/player/blue-ship.fw.png',
-      red: '/src/assets/player/red-ship.fw.png',
-      yellow: '/src/assets/player/yellow-ship.fw.png',
-      pink: '/src/assets/player/pink-ship.fw.png'
+      blue: '/assets/player/blue-ship.fw.png',
+      red: '/assets/player/red-ship.fw.png',
+      yellow: '/assets/player/yellow-ship.fw.png',
+      pink: '/assets/player/pink-ship.fw.png'
     };
     
     const shipPath = shipPaths[characterType] || shipPaths.blue;
@@ -388,29 +562,63 @@ class GameEngine {
   async preloadAssets() {
     const imageMap = {
       // Shooting enemies
-      'enemy-1': '/src/assets/shooting-enemy/enemy-1.fw.png',
-      'enemy-2': '/src/assets/shooting-enemy/enemy-2.fw.png',
-      'enemy-3': '/src/assets/shooting-enemy/enemy-3.fw.png',
-      'enemy-4': '/src/assets/shooting-enemy/enemy-4.fw.png',
-      'enemy-5': '/src/assets/shooting-enemy/enemy-5.fw.png',
+      'enemy-1': '/assets/shooting-enemy/enemy-1.fw.png',
+      'enemy-2': '/assets/shooting-enemy/enemy-2.fw.png',
+      'enemy-3': '/assets/shooting-enemy/enemy-3.fw.png',
+      'enemy-4': '/assets/shooting-enemy/enemy-4.fw.png',
+      'enemy-5': '/assets/shooting-enemy/enemy-5.fw.png',
       // Non-shooting enemies
-      'steroids-1': '/src/assets/none-shooting-enemy/steriods-1.fw.png',
-      'steroids-2': '/src/assets/none-shooting-enemy/steriods-2.fw.png',
-      'steroids-3': '/src/assets/none-shooting-enemy/steriods-3.fw.png',
-      'steroids-4': '/src/assets/none-shooting-enemy/steriods-4.fw.png',
-      'steroids-5': '/src/assets/none-shooting-enemy/steriods-5.fw.png',
-      'steroids-6': '/src/assets/none-shooting-enemy/steriods-6.fw.png',
+      'steroids-1': '/assets/none-shooting-enemy/steriods-1.fw.png',
+      'steroids-2': '/assets/none-shooting-enemy/steriods-2.fw.png',
+      'steroids-3': '/assets/none-shooting-enemy/steriods-3.fw.png',
+      'steroids-4': '/assets/none-shooting-enemy/steriods-4.fw.png',
+      'steroids-5': '/assets/none-shooting-enemy/steriods-5.fw.png',
+      'steroids-6': '/assets/none-shooting-enemy/steriods-6.fw.png',
       // Bosses
-      'boss-1': '/src/assets/boss/boss-1.fw.png',
-      'boss-2': '/src/assets/boss/boss-2.fw.png',
-      'boss-3': '/src/assets/boss/boss-3.fw.png',
-      'boss-4': '/src/assets/boss/boss-4.fw.png',
-      'boss-5': '/src/assets/boss/boss-5.fw.png',
-      'boss-6': '/src/assets/boss/boss-6.fw.png',
-      'boss-7': '/src/assets/boss/boss-7.fw.png',
-      'boss-8': '/src/assets/boss/boss-8.fw.png',
-      'boss-9': '/src/assets/boss/boss-9.fw.png',
-      'boss-10': '/src/assets/boss/boss-10.fw.png'
+      'boss-1': '/assets/boss/boss-1.fw.png',
+      'boss-2': '/assets/boss/boss-2.fw.png',
+      'boss-3': '/assets/boss/boss-3.fw.png',
+      'boss-4': '/assets/boss/boss-4.fw.png',
+      'boss-5': '/assets/boss/boss-5.fw.png',
+      'boss-6': '/assets/boss/boss-6.fw.png',
+      'boss-7': '/assets/boss/boss-7.fw.png',
+      'boss-8': '/assets/boss/boss-8.fw.png',
+      'boss-9': '/assets/boss/boss-9.fw.png',
+      'boss-10': '/assets/boss/boss-10.fw.png',
+      // Power-ups
+      'powerup-TRIPLE_SHOT': '/assets/power-ups/fire-3-direction-bullets.png',
+      'powerup-EXTRA_LIFE': '/assets/power-ups/additional-life.fw.png',
+      'powerup-SCREEN_BOMB': '/assets/power-ups/bomb-all-enemy-in-the-screen.fw.png',
+      'powerup-INVINCIBILITY': '/assets/power-ups/defense-imunity.fw.png',
+      'powerup-TIME_FREEZE': '/assets/power-ups/freeze-enemy.fw.png',
+      'powerup-DOUBLE_DAMAGE': '/assets/power-ups/green-fire-double-damage.fw.png',
+      'powerup-LEVEL_UP': '/assets/power-ups/level-up-spaceship.png',
+      'powerup-HOMING_MISSILES': '/assets/power-ups/lock-bullets-to-enemy.fw.png',
+      'powerup-ORBIT_SHIELD': '/assets/power-ups/2-balls-circle-on-player.fw.png',
+      'powerup-ALLY_SUPPORT': '/assets/power-ups/one-of-other-charater-will-appear-to-help.fw.png',
+      'powerup-SUPER_MODE': '/assets/power-ups/super-1.fw.png',
+      'powerup-SUPER_MODE_2': '/assets/power-ups/super-2.fw.png',
+      // Ship upgrades (all 4 colors, 4 levels each)
+      // Blue ships
+      'ship-blue-0': '/assets/player/blue-level-0.fw.png',
+      'ship-blue-1': '/assets/player/blue-level-1.fw.png',
+      'ship-blue-2': '/assets/player/blue-level-2.fw.png',
+      'ship-blue-3': '/assets/player/blue-level-3.fw.png',
+      // Red ships
+      'ship-red-0': '/assets/player/red-level-0.fw.png',
+      'ship-red-1': '/assets/player/red-level-1.fw.png',
+      'ship-red-2': '/assets/player/red-level-2.fw.png',
+      'ship-red-3': '/assets/player/red-level-3.fw.png',
+      // Yellow ships
+      'ship-yellow-0': '/assets/player/yellow-level-0.fw.png',
+      'ship-yellow-1': '/assets/player/yellow-level-1.fw.png',
+      'ship-yellow-2': '/assets/player/yellow-level-2.fw.png',
+      'ship-yellow-3': '/assets/player/yellow-level-3.fw.png',
+      // Pink ships
+      'ship-pink-0': '/assets/player/pink-level-0.fw.png',
+      'ship-pink-1': '/assets/player/pink-level-1.fw.png',
+      'ship-pink-2': '/assets/player/pink-level-2.fw.png',
+      'ship-pink-3': '/assets/player/pink-level-3.fw.png'
     };
     
     await this.assetLoader.preloadAssets(imageMap);
@@ -499,10 +707,12 @@ class GameEngine {
     this.updateStars();
     this.updateEnemies(dt);
     this.updateParticles(dt);
+    this.updatePowerUps(dt);
+    this.updateAllySupport(dt);
+    this.updateOrbitShield(dt);
     this.checkCollisions();
     this.spawnEnemies(dt);
     this.checkLevelProgress();
-    this.checkBossSpawn();
   }
   
   handleInput() {
@@ -548,15 +758,57 @@ class GameEngine {
     // Don't shoot if game is over
     if (this.isGameOver) return;
     
-    const bullet = this.bulletPool.get();
-    bullet.x = this.player.x;
-    bullet.y = this.player.y - this.player.height / 2;
-    bullet.vx = 0;
-    bullet.vy = -10;
-    bullet.active = true;
-    bullet.color = this.player.color;
-    bullet.isEnemy = false; // Explicitly mark as player bullet
-    this.bullets.push(bullet);
+    // Check for Super 2 power-up - fires in all 360 degrees!
+    if (this.hasActivePowerUp('SUPER_MODE_2')) {
+      const numBullets = 12; // Fire 12 bullets in a circle
+      const speed = 10;
+      
+      for (let i = 0; i < numBullets; i++) {
+        const angle = (Math.PI * 2 / numBullets) * i;
+        
+        const bullet = this.bulletPool.get();
+        bullet.x = this.player.x;
+        bullet.y = this.player.y;
+        bullet.vx = Math.cos(angle) * speed;
+        bullet.vy = Math.sin(angle) * speed;
+        bullet.active = true;
+        bullet.color = '#FFD700'; // Golden bullets
+        bullet.isEnemy = false;
+        bullet.size = 10; // Double size (normal is 5)
+        bullet.isHoming = false;
+        bullet.damage = 1;
+        this.bullets.push(bullet);
+      }
+      return; // Super 2 fires once per shot cycle, don't fire normal bullets
+    }
+    
+    const baseSpeed = -10;
+    const bulletColor = this.hasActivePowerUp('DOUBLE_DAMAGE') ? '#00FF00' : this.player.color;
+    const isHoming = this.hasActivePowerUp('HOMING_MISSILES');
+    
+    // Triple Shot: Fire 3 bullets in spread pattern
+    const bulletCount = this.hasActivePowerUp('TRIPLE_SHOT') ? 3 : 1;
+    
+    for (let i = 0; i < bulletCount; i++) {
+      const bullet = this.bulletPool.get();
+      bullet.x = this.player.x;
+      bullet.y = this.player.y - this.player.height / 2;
+      
+      // Calculate angle for spread
+      let angle = 0;
+      if (bulletCount === 3) {
+        angle = (i - 1) * 0.3; // -0.3, 0, 0.3 radians
+      }
+      
+      bullet.vx = Math.sin(angle) * 10;
+      bullet.vy = Math.cos(angle) * baseSpeed;
+      bullet.active = true;
+      bullet.color = bulletColor;
+      bullet.isEnemy = false;
+      bullet.isHoming = isHoming; // Mark for homing behavior
+      bullet.damage = this.hasActivePowerUp('DOUBLE_DAMAGE') ? 2 : 1;
+      this.bullets.push(bullet);
+    }
   }
   
   updatePlayer(dt) {
@@ -603,6 +855,34 @@ class GameEngine {
   updateBullets(dt) {
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const bullet = this.bullets[i];
+      
+      // Homing missile logic
+      if (bullet.isHoming && !bullet.isEnemy) {
+        // Find nearest enemy
+        let nearestEnemy = null;
+        let nearestDist = Infinity;
+        
+        for (const enemy of this.enemies) {
+          const dx = enemy.x - bullet.x;
+          const dy = enemy.y - bullet.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < nearestDist) {
+            nearestDist = dist;
+            nearestEnemy = enemy;
+          }
+        }
+        
+        if (nearestEnemy && nearestDist < 500) {
+          // Steer toward enemy
+          const dx = nearestEnemy.x - bullet.x;
+          const dy = nearestEnemy.y - bullet.y;
+          const targetAngle = Math.atan2(dy, dx);
+          const speed = Math.sqrt(bullet.vx * bullet.vx + bullet.vy * bullet.vy);
+          bullet.vx = Math.cos(targetAngle) * speed;
+          bullet.vy = Math.sin(targetAngle) * speed;
+        }
+      }
+      
       bullet.x += bullet.vx;
       bullet.y += bullet.vy;
       
@@ -616,6 +896,11 @@ class GameEngine {
   }
   
   updateEnemies(dt) {
+    // Time Freeze: Skip enemy updates if power-up is active
+    if (this.hasActivePowerUp('TIME_FREEZE')) {
+      return; // Enemies don't move or shoot
+    }
+    
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
       // enemy.y += enemy.speed; // Moved into if/else below for boss special handling
@@ -989,6 +1274,60 @@ class GameEngine {
       }
     }
     
+    // Orbit Shield collision with enemy bullets
+    if (this.hasActivePowerUp('ORBIT_SHIELD') && this.orbitBalls.length > 0) {
+      for (let i = this.bullets.length - 1; i >= 0; i--) {
+        const bullet = this.bullets[i];
+        if (!bullet.isEnemy) continue; // Only enemy bullets
+        
+        for (const ball of this.orbitBalls) {
+          const ballX = this.player.x + Math.cos(ball.angle) * ball.distance;
+          const ballY = this.player.y + Math.sin(ball.angle) * ball.distance;
+          
+          const dx = bullet.x - ballX;
+          const dy = bullet.y - ballY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < ball.size + bullet.size) {
+            // Destroy bullet
+            this.createParticles(bullet.x, bullet.y, '#00FFFF', 10);
+            this.bullets.splice(i, 1);
+            this.bulletPool.release(bullet);
+            break;
+          }
+        }
+      }
+    }
+    
+    // Orbit Shield collision with enemies
+    if (this.hasActivePowerUp('ORBIT_SHIELD') && this.orbitBalls.length > 0) {
+      for (let i = this.enemies.length - 1; i >= 0; i--) {
+        const enemy = this.enemies[i];
+        
+        for (const ball of this.orbitBalls) {
+          const ballX = this.player.x + Math.cos(ball.angle) * ball.distance;
+          const ballY = this.player.y + Math.sin(ball.angle) * ball.distance;
+          
+          const dx = enemy.x - ballX;
+          const dy = enemy.y - ballY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < ball.size + enemy.size) {
+            // Hit enemy with orbit shield!
+            this.enemyHit(enemy, i);
+            
+            // Create spark effect
+            this.createParticles(ballX, ballY, '#00FFFF', 5);
+            
+            // If enemy destroyed, break to avoid index issues
+            if (enemy.hp <= 0) {
+              break;
+            }
+          }
+        }
+      }
+    }
+    
     // Player-enemy collisions
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
@@ -1032,6 +1371,11 @@ class GameEngine {
   }
   
   playerHit() {
+    // Check if invincible
+    if (this.hasActivePowerUp('INVINCIBILITY')) {
+      return; // No damage taken
+    }
+    
     this.player.hp--;
     this.player.invincible = 2000;
     this.createParticles(this.player.x, this.player.y, this.player.color, 20);
@@ -1050,8 +1394,11 @@ class GameEngine {
     }
   }
   
+  
   enemyHit(enemy, index) {
-    enemy.hp--;
+    // Double Damage power-up
+    const damage = this.hasActivePowerUp('DOUBLE_DAMAGE') ? 2 : 1;
+    enemy.hp -= damage;
     
     // Boss hit effects - HUGE particles!
     if (enemy.isBoss) {
@@ -1061,21 +1408,27 @@ class GameEngine {
     if (enemy.hp <= 0) {
       // Enemy destroyed
       this.player.score += enemy.points;
+      
+      // 25% chance to spawn power-up
+      if (Math.random() < 0.25 && !enemy.isBoss) {
+        this.spawnPowerUp(enemy.x, enemy.y);
+      }
+      
       if (enemy.isBoss) {
         // Boss death: EPIC explosion with debris!
         this.createBossDeathExplosion(enemy.x, enemy.y, enemy.size);
         this.enemies.splice(index, 1);
-        this.callbacks.onScoreChange?.(this.player.score);
+        this.callbacks.onScoreUpdate?.(this.player.score);
       } else if (enemy.canShoot) {
         // Shooting enemy: explosive fire effect
         this.createFireExplosion(enemy.x, enemy.y, enemy.color);
         this.enemies.splice(index, 1);
-        this.callbacks.onScoreChange?.(this.player.score);
+        this.callbacks.onScoreUpdate?.(this.player.score);
       } else {
         // Non-shooting enemy: double particle pop effect
         this.createParticles(enemy.x, enemy.y, enemy.color, 20); // Reduced from 40 to prevent lag
         this.enemies.splice(index, 1);
-        this.callbacks.onScoreChange?.(this.player.score);
+        this.callbacks.onScoreUpdate?.(this.player.score);
       }
     } else {
       // Enemy hit but not destroyed
@@ -1439,6 +1792,329 @@ class GameEngine {
     this.enemies.push(enemy);
   }
   
+  // ==================== POWER-UP SYSTEM ====================
+  
+  spawnPowerUp(x, y) {
+    // Determine rarity weights
+    const rarity = this.getRandomRarity();
+    const availableTypes = Object.keys(POWERUP_TYPES).filter(
+      type => POWERUP_TYPES[type].rarity === rarity
+    );
+    
+    // Fallback to common if no types available for this rarity
+    const typesToPick = availableTypes.length > 0 ? availableTypes :
+      Object.keys(POWERUP_TYPES).filter(type => POWERUP_TYPES[type].rarity === 'common');
+    
+    const randomType = typesToPick[Math.floor(Math.random() * typesToPick.length)];
+    
+    const powerUp = new PowerUp(x, y, randomType);
+    powerUp.game = this;
+    this.powerUps.push(powerUp);
+  }
+  
+  getRandomRarity() {
+    const rand = Math.random();
+    if (rand < 0.40) return 'common';      // 40%
+    if (rand < 0.65) return 'uncommon';    // 25%
+    if (rand < 0.85) return 'rare';        // 20%
+    if (rand < 0.95) return 'very_rare';   // 10%
+    return 'legendary';                    // 5%
+  }
+  
+  updatePowerUps(dt) {
+    // Update floating power-ups
+    for (let i = this.powerUps.length - 1; i >= 0; i--) {
+      const powerUp = this.powerUps[i];
+      powerUp.update(dt);
+      
+      // Check collision with player
+      if (powerUp.active && this.checkPowerUpCollision(powerUp)) {
+        this.activatePowerUp(powerUp);
+        powerUp.active = false;
+        this.powerUps.splice(i, 1);
+      } else if (!powerUp.active) {
+        this.powerUps.splice(i, 1);
+      }
+    }
+    
+    // Update active power-up timers
+    this.updateActivePowerUps();
+  }
+  
+  checkPowerUpCollision(powerUp) {
+    const dx = powerUp.x - this.player.x;
+    const dy = powerUp.y - this.player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < (powerUp.size / 2 + this.player.width / 2);
+  }
+  
+  activatePowerUp(powerUp) {
+    const type = powerUp.type;
+    const config = POWERUP_TYPES[type];
+    
+    // Play activation sound (if you add sounds later)
+    // this.playSound('powerup');
+    
+    // Create pickup particles
+    this.createParticles(powerUp.x, powerUp.y, config.color, 15);
+    
+    // Handle instant effects
+    if (type === 'SCREEN_BOMB') {
+      this.activateScreenBomb();
+      return;
+    }
+    
+    if (type === 'EXTRA_LIFE') {
+      this.player.hp = Math.min(this.player.hp + 1, 5);
+      this.callbacks.onLivesChange?.(this.player.hp);
+      return;
+    }
+    
+    if (type === 'LEVEL_UP') {
+      this.activateLevelUp();
+      this.callbacks.onPowerUpActivated?.('LEVEL_UP');
+      this.callbacks.onAvatarStateChange?.('power-up');
+      return;
+    }
+    
+    // Handle SUPER MODE - activates all power-ups at once!
+    if (type === 'SUPER_MODE') {
+      const now = Date.now();
+      const superDuration = config.duration;
+      
+      // Activate all timed power-ups
+      const powerUpsToActivate = ['TRIPLE_SHOT', 'DOUBLE_DAMAGE', 'HOMING_MISSILES', 
+                                    'ORBIT_SHIELD', 'ALLY_SUPPORT', 'INVINCIBILITY', 'TIME_FREEZE'];
+      
+      for (const puType of powerUpsToActivate) {
+        if (!this.player.activePowerUps[puType]) {
+          this.player.activePowerUps[puType] = [];
+        }
+        this.player.activePowerUps[puType].push(now + superDuration);
+        console.log(`SUPER MODE: Activated ${POWERUP_TYPES[puType].name}`);
+      }
+      
+      // Epic screen flash for super mode!
+      this.callbacks.onPowerUpActivated?.('SUPER_MODE');
+      this.callbacks.onAvatarStateChange?.('power-up');
+      this.screenFlash = 2.0; // Brighter flash
+      return;
+    }
+    
+    // Handle timed power-ups (can stack)
+    const now = Date.now();
+    if (!this.player.activePowerUps[type]) {
+      this.player.activePowerUps[type] = [];
+    }
+    
+    // Add new instance with expiration time
+    const expirationTime = now + config.duration;
+    this.player.activePowerUps[type].push(expirationTime);
+    
+    // Notify React of power-up activation for avatar reaction
+    this.callbacks.onPowerUpActivated?.(type);
+    this.callbacks.onAvatarStateChange?.('power-up');
+    
+    // Log activation
+    console.log(`Activated ${config.name} for ${config.duration}ms`);
+  }
+  
+  activateScreenBomb() {
+    // Destroy all enemies on screen
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+      const enemy = this.enemies[i];
+      this.player.score += enemy.points;
+      this.createExplosion(enemy.x, enemy.y, enemy.color, 30);
+      this.enemies.splice(i, 1);
+    }
+    
+    // Clear all enemy bullets
+    for (let i = this.bullets.length - 1; i >= 0; i--) {
+      if (this.bullets[i].isEnemy) {
+        this.bullets.splice(i, 1);
+      }
+    }
+    
+    this.callbacks.onScoreUpdate?.(this.player.score);
+    
+    // Epic screen flash
+    this.screenFlash = 1.0;
+  }
+  
+  activateLevelUp() {
+    if (this.player.level < 3) {
+      this.player.level++;
+      this.callbacks.onLevelUp?.(this.player.level);
+      console.log(`Level Up! Now at level ${this.player.level}`);
+      
+      // Update player ship image
+      this.loadPlayerShip(this.characterType);
+    } else {
+      // Already at max level, give extra points instead
+      this.player.score += 5000;
+      this.callbacks.onScoreUpdate?.(this.player.score);
+    }
+  }
+  
+  updateActivePowerUps() {
+    const now = Date.now();
+    
+    // Check each power-up type
+    for (const type in this.player.activePowerUps) {
+      const instances = this.player.activePowerUps[type];
+      
+      // Remove expired instances
+      for (let i = instances.length - 1; i >= 0; i--) {
+        if (now >= instances[i]) {
+          console.log(`Expired: ${POWERUP_TYPES[type].name}`);
+          instances.splice(i, 1);
+        }
+      }
+      
+      // Clean up empty arrays
+      if (instances.length === 0) {
+        delete this.player.activePowerUps[type];
+      }
+    }
+  }
+  
+  hasActivePowerUp(type) {
+    return this.player.activePowerUps[type] && 
+           this.player.activePowerUps[type].length > 0;
+  }
+  
+  getActivePowerUpsList() {
+    return Object.keys(this.player.activePowerUps);
+  }
+  
+  renderPowerUps(ctx) {
+    for (const powerUp of this.powerUps) {
+      powerUp.render(ctx);
+    }
+  }
+  
+  // ==================== ORBIT SHIELD ====================
+  
+  updateOrbitShield(dt) {
+    if (this.hasActivePowerUp('ORBIT_SHIELD')) {
+      // Initialize orbit balls if not exists
+      if (this.orbitBalls.length === 0) {
+        for (let i = 0; i < 2; i++) {
+          this.orbitBalls.push({
+            angle: (Math.PI * 2 / 2) * i,
+            distance: 50,
+            size: 15
+          });
+        }
+      }
+      
+      // Update orbit angles
+      for (const ball of this.orbitBalls) {
+        ball.angle += dt * 3; // Orbit speed
+      }
+    } else {
+      // Clear orbit balls when power-up expires
+      this.orbitBalls = [];
+    }
+  }
+  
+  renderOrbitShield(ctx) {
+    if (!this.hasActivePowerUp('ORBIT_SHIELD') || this.orbitBalls.length === 0) return;
+    
+    for (const ball of this.orbitBalls) {
+      const x = this.player.x + Math.cos(ball.angle) * ball.distance;
+      const y = this.player.y + Math.sin(ball.angle) * ball.distance;
+      
+      // Draw orbiting ball with glow
+      ctx.save();
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#00FFFF';
+      ctx.fillStyle = '#00FFFF';
+      ctx.beginPath();
+      ctx.arc(x, y, ball.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  
+  // ==================== ALLY SUPPORT ====================
+  
+  updateAllySupport(dt) {
+    if (this.hasActivePowerUp('ALLY_SUPPORT')) {
+      if (!this.allyShip) {
+        // Create ally ship
+        this.allyShip = {
+          x: this.player.x - 100,
+          y: this.player.y,
+          lastShot: 0,
+          fireRate: 300
+        };
+      }
+      
+      // Ally follows player
+      this.allyShip.x += (this.player.x - 100 - this.allyShip.x) * 0.05;
+      this.allyShip.y += (this.player.y - this.allyShip.y) * 0.05;
+      
+      // Ally shoots at enemies
+      const now = Date.now();
+      if (now - this.allyShip.lastShot > this.allyShip.fireRate) {
+        this.allyShip.lastShot = now;
+        
+        // Find nearest enemy
+        let nearestEnemy = null;
+        let nearestDist = Infinity;
+        for (const enemy of this.enemies) {
+          const dx = enemy.x - this.allyShip.x;
+          const dy = enemy.y - this.allyShip.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < nearestDist) {
+            nearestDist = dist;
+            nearestEnemy = enemy;
+          }
+        }
+        
+        if (nearestEnemy) {
+          // Shoot at enemy
+          const dx = nearestEnemy.x - this.allyShip.x;
+          const dy = nearestEnemy.y - this.allyShip.y;
+          const angle = Math.atan2(dy, dx);
+          
+          const bullet = this.bulletPool.get();
+          bullet.x = this.allyShip.x;
+          bullet.y = this.allyShip.y;
+          bullet.vx = Math.cos(angle) * 10;
+          bullet.vy = Math.sin(angle) * 10;
+          bullet.active = true;
+          bullet.color = '#FFE4B5';
+          bullet.isEnemy = false;
+          bullet.damage = 1;
+          this.bullets.push(bullet);
+        }
+      }
+    } else {
+      this.allyShip = null;
+    }
+  }
+  
+  renderAllySupport(ctx) {
+    if (!this.hasActivePowerUp('ALLY_SUPPORT') || !this.allyShip) return;
+    
+    ctx.save();
+    ctx.translate(this.allyShip.x, this.allyShip.y);
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#FFE4B5';
+    ctx.fillStyle = '#FFE4B5';
+    
+    // Draw ally ship (smaller triangle)
+    ctx.beginPath();
+    ctx.moveTo(0, -20);
+    ctx.lineTo(-15, 15);
+    ctx.lineTo(15, 15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  
   spawnBoss() {
     this.bossActive = true;
     const bossStage = Math.min(Math.floor(this.currentLevel / 2) + 1, 10);
@@ -1622,22 +2298,54 @@ class GameEngine {
       }
     });
     
+    // Draw power-ups
+    this.renderPowerUps(ctx);
+    
+    // Draw ally support
+    this.renderAllySupport(ctx);
+    
     // Draw player
     if (!this.player.isDead) {
-      ctx.save();
-      ctx.translate(this.player.x, this.player.y);
+      // Draw orbit shield behind player
+      this.renderOrbitShield(ctx);
       
-      // Invincibility flash
-      if (this.player.invincible > 0) {
-        ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.5;
-      }
-      
-      // Player glow
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = this.player.color;
-      
-      // Draw player ship image or fallback to triangle
-      if (this.player.shipImage && this.player.shipImage.complete) {
+        ctx.save();
+        ctx.translate(this.player.x, this.player.y);
+        
+        // Special effects for power-ups
+        const isInvincible = this.hasActivePowerUp('INVINCIBILITY');
+        const isSuperMode = this.hasActivePowerUp('SUPER_MODE');
+        
+        if (isInvincible || isSuperMode) {
+          // Invincibility: golden pulsing glow
+          const pulse = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+          ctx.globalAlpha = pulse;
+          ctx.shadowBlur = 40;
+          ctx.shadowColor = isSuperMode ? '#FF4500' : '#FFD700'; // Orange for super, gold for invincibility
+        } else if (this.player.invincible > 0) {
+          // Regular hit invincibility flash
+          ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.5;
+        }
+        
+        // Super Mode: Rainbow aura effect
+        if (isSuperMode) {
+          const time = Date.now() * 0.001;
+          const hue = (time * 100) % 360;
+          ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, 0, 50, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        
+        // Player glow
+        if (!isInvincible && !isSuperMode) {
+          ctx.shadowBlur = 20;
+          ctx.shadowColor = this.player.color;
+        }
+        
+        // Draw player ship image or fallback to triangle
+        if (this.player.shipImage && this.player.shipImage.complete) {
         // Get natural image dimensions to maintain aspect ratio
         const naturalWidth = this.player.shipImage.naturalWidth;
         const naturalHeight = this.player.shipImage.naturalHeight;
@@ -1667,7 +2375,6 @@ class GameEngine {
       }
       ctx.restore();
     }
-    
   }
   
   initStars() {
