@@ -1564,7 +1564,11 @@ class GameEngine {
       
       // Boss defeated check
       if (enemy.isBoss && enemy.hp <= 0) {
+        console.log(`💀 Boss HP reached 0! Removing boss and starting stage clear...`);
         this.bossDefeated();
+        this.enemies.splice(i, 1); // Remove boss from enemies array
+        i--; // Adjust index after removal
+        continue; // Skip rest of loop for this boss
       }
       
       // Remove off-screen enemies (but not boss) - check all boundaries
@@ -1911,8 +1915,10 @@ class GameEngine {
       if (enemy.isBoss) {
         // Boss death: EPIC explosion with debris!
         this.createBossDeathExplosion(enemy.x, enemy.y, enemy.size);
+        this.bossDefeated(); // Start stage clear sequence!
         this.enemies.splice(index, 1);
         this.callbacks.onScoreUpdate?.(this.player.score);
+        return; // Exit early - bossDefeated handles everything
       } else if (enemy.canShoot) {
         // Shooting enemy: explosive fire effect
         this.createFireExplosion(enemy.x, enemy.y, enemy.color);
@@ -2710,14 +2716,21 @@ class GameEngine {
   bossDefeated() {
     this.bossActive = false;
     
+    console.log('🎯 BOSS DEFEATED! Starting stage clear sequence...');
+    console.log(`Current enemies count: ${this.enemies.length}`);
+    
     // Start stage clear sequence immediately
     this.isStageClearing = true;
     this.stageClearPhase = 'message'; // message, explode, flyUp, wipe, complete
     this.stageClearTimer = Date.now();
     this.stageClearProgress = 0;
     
+    console.log(`✅ isStageClearing set to: ${this.isStageClearing}`);
+    console.log(`✅ stageClearPhase: ${this.stageClearPhase}`);
+    
     // Show "STAGE X Clear" message immediately
     this.callbacks.onStageCleared?.(this.currentLevel);
+    console.log(`✅ Called onStageCleared callback for stage ${this.currentLevel}`);
     
     // Explode all remaining enemies instantly
     this.enemies.forEach(enemy => {
@@ -2751,6 +2764,10 @@ class GameEngine {
   updateStageClear(dt) {
     if (!this.isStageClearing) return;
     
+    if (this.stageClearProgress === 0) {
+      console.log(`🎬 updateStageClear called - phase: ${this.stageClearPhase}`);
+    }
+    
     const now = Date.now();
     const elapsed = now - this.stageClearTimer;
     
@@ -2758,6 +2775,7 @@ class GameEngine {
       // Show "STAGE X Clear" for 2 seconds
       if (elapsed >= 2000) {
         this.stageClearPhase = 'flyUp';
+        console.log('✅ Phase transition: message → flyUp');
         this.stageClearTimer = now;
         this.stageClearProgress = 0;
       }
@@ -2786,6 +2804,7 @@ class GameEngine {
       
       if (this.stageClearProgress >= 1) {
         this.stageClearPhase = 'wipe';
+        console.log('✅ Phase transition: flyUp → wipe');
         this.stageClearTimer = now;
         this.wipeProgress = 0;
       }
@@ -2805,13 +2824,9 @@ class GameEngine {
         
         // Restore player data (score and hp only)
         this.player.score = this.savedScore;
-        this.player.hp = this.savedHp;
-        
         // Start next stage
         this.isStageClearing = false;
         this.startStageTransition();
-        
-        console.log(`Transitioned to stage ${this.currentLevel}`);
       }
     }
   }
