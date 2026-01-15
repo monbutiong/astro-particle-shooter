@@ -21,6 +21,7 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
   const [bossWarning, setBossWarning] = useState(false);
   const [bossTimer, setBossTimer] = useState(60);
   const [avatarState, setAvatarState] = useState('normal');
+  const [stageCompleted, setStageCompleted] = useState(null);
   const [highScore, setHighScore] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
   
@@ -143,6 +144,10 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     },
     onLevelUp: (newLevel) => {
       setLevel(newLevel);
+    },
+    onStageCleared: (clearedStage) => {
+      // Show "STAGE X Clear" message immediately
+      setStageCompleted(clearedStage);
     },
     onGameOver: (finalScoreValue) => {
       setFinalScore(finalScoreValue);
@@ -400,6 +405,41 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
             animation: 'textFlash 0.5s ease-in-out infinite alternate'
           }}>
             INCOMING!
+          </div>
+        </div>
+      )}
+      
+      {/* Stage Completed Message */}
+      {stageCompleted !== null && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 100,
+          textAlign: 'center',
+          animation: 'stageCompletePulse 1s ease-in-out infinite'
+        }}>
+          {/* Trophy Icon */}
+          <div style={{
+            fontSize: '48px',
+            marginBottom: '10px',
+            textShadow: '0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.5)',
+            animation: 'trophyGlow 1s ease-in-out infinite alternate'
+          }}>
+            🏆
+          </div>
+          
+          {/* Stage Clear Text */}
+          <div key={`stage-clear-${stageCompleted}`} style={{
+            fontSize: '36px',
+            fontWeight: 'bold',
+            color: '#FFD700',
+            textShadow: '0 0 15px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.5), 3px 3px 6px rgba(0, 0, 0, 0.8)',
+            marginBottom: '8px',
+            letterSpacing: '2px'
+          }}>
+            STAGE {stageCompleted} CLEAR!
           </div>
         </div>
       )}
@@ -1165,6 +1205,14 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
             @keyframes textFlash {
               0% { opacity: 1; }
               100% { opacity: 0.7; text-shadow: 0 0 40px rgba(255, 204, 0, 1), 0 0 80px rgba(255, 204, 0, 0.8); }
+            }
+            @keyframes stageCompletePulse {
+              0%, 100% { transform: translate(-50%, -50%) scale(1); }
+              50% { transform: translate(-50%, -50%) scale(1.05); }
+            }
+            @keyframes trophyGlow {
+              0% { filter: brightness(1) drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); }
+              100% { filter: brightness(1.3) drop-shadow(0 0 30px rgba(255, 215, 0, 1)); }
             }
           `}</style>
         </div>

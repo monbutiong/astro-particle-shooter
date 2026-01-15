@@ -669,6 +669,14 @@ class GameEngine {
     this.stageMessage = '';
     this.stageMessageOpacity = 0;
     
+    // Stage clear animation system
+    this.isStageClearing = false;
+    this.stageClearPhase = 'idle'; // message, explode, flyUp, wipe, complete
+    this.stageClearTimer = 0;
+    this.stageClearProgress = 0;
+    this.savedScore = 0;
+    this.savedHp = 0;
+    
     // Stars for space warp background
     this.stars = [];
     this.initStars();
@@ -939,6 +947,69 @@ class GameEngine {
     this.callbacks.onGameOver?.(this.player.score);
   }
   
+  // Screen Wipe Animation System
+  startWipeAnimation(direction, callback = null) {
+    this.isWipeAnimation = true;
+    this.wipeDirection = direction;
+    this.wipeCallback = callback;
+    this.wipeTimer = Date.now();
+    this.wipeProgress = 0;
+    
+    if (direction === 'out') {
+      this.wipePhase = 'wipe_out';
+      this.wipeProgress = 0;
+    } else {
+      this.wipePhase = 'wipe_in';
+      this.wipeProgress = 1;
+    }
+    
+    console.log(`Screen wipe animation started: ${direction}`);
+  }
+  
+  updateWipeAnimation(dt) {
+    if (!this.isWipeAnimation) return;
+    
+    const now = Date.now();
+    const elapsed = now - this.wipeTimer;
+    const wipeDuration = 800;
+    const holdDuration = 300;
+    
+    if (this.wipePhase === 'wipe_out') {
+      this.wipeProgress = Math.min(elapsed / wipeDuration, 1);
+      if (this.wipeProgress >= 1) {
+        this.wipePhase = 'hold';
+        this.wipeTimer = now;
+        this.wipeProgress = 1;
+        if (this.wipeCallback) {
+          this.wipeCallback();
+          this.wipeCallback = null;
+        }
+      }
+    } else if (this.wipePhase === 'hold') {
+      if (elapsed >= holdDuration) {
+        this.wipePhase = 'wipe_in';
+        this.wipeTimer = now;
+        this.wipeProgress = 1;
+      }
+    } else if (this.wipePhase === 'wipe_in') {
+      this.wipeProgress = 1 - Math.min(elapsed / wipeDuration, 1);
+      if (this.wipeProgress <= 0) {
+        this.isWipeAnimation = false;
+        this.wipeProgress = 0;
+        this.wipePhase = 'idle';
+      }
+    }
+  }
+  
+  renderWipeOverlay(ctx) {
+    if (!this.isWipeAnimation || this.wipeProgress <= 0) return;
+    
+    ctx.save();
+    ctx.fillStyle = `rgba(0, 0, 0, ${this.wipeProgress})`;
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.restore();
+  }
+  
   // Entrance Animation
   startEntranceAnimation() {
     this.isEntranceAnimation = true;
@@ -1049,7 +1120,19 @@ class GameEngine {
       this.gameTime += dt;
       this.bossTimer = Math.max(0, this.bossSpawnTime - this.gameTime);
     }
-    
+  
+    // Update wipe animation (highest priority - blocks everything)
+    if (this.isWipeAnimation) {
+      this.updateWipeAnimation(dt);
+      return; // Skip all game logic during wipe
+    }
+  
+    // Update stage clear animation (boss defeated sequence)
+    if (this.isStageClearing) {
+      this.updateStageClear(dt);
+      return; // Skip all game logic during stage clear
+    }
+  
     // Update entrance animation (blocks normal gameplay until complete)
     if (this.isEntranceAnimation) {
       this.updateEntranceAnimation(dt);
@@ -1116,10 +1199,12 @@ class GameEngine {
   shoot() {
     // Don't shoot if game is over
     if (this.isGameOver) return;
-    
-    // Don't shoot during entrance animation
+  
+    // Don't shoot during wipe or entrance animation
+    if (this.isWipeAnimation) return;
+  
     if (this.entranceShootingDisabled) return;
-    
+ 
     // Check for Super 2 power-up - fires in all 360 degrees!
     if (this.hasActivePowerUp('SUPER_MODE_2')) {
       const numBullets = 12; // Fire 12 bullets in a circle
@@ -2624,18 +2709,126 @@ class GameEngine {
   
   bossDefeated() {
     this.bossActive = false;
-    this.currentLevel++;
-    this.enemiesSpawned = 0;
-    // Reset boss timer for next level using new boss config
-    this.resetBossTimer();
-    this.callbacks.onLevelUp?.(this.currentLevel);
     
-    // Clear all enemies and bullets for stage transition
+    // Start stage clear sequence immediately
+    this.isStageClearing = true;
+    this.stageClearPhase = 'message'; // message, explode, flyUp, wipe, complete
+    this.stageClearTimer = Date.now();
+    this.stageClearProgress = 0;
+    
+    // Show "STAGE X Clear" message immediately
+    this.callbacks.onStageCleared?.(this.currentLevel);
+    
+    // Explode all remaining enemies instantly
+    this.enemies.forEach(enemy => {
+      // Create explosion particles for each enemy
+      for (let i = 0; i < 15; i++) {
+        const particle = this.particlePool.get();
+        if (particle) {
+          particle.x = enemy.x;
+          particle.y = enemy.y;
+          particle.vx = (Math.random() - 0.5) * 10;
+          particle.vy = (Math.random() - 0.5) * 10;
+          particle.life = 60;
+          particle.maxLife = 60;
+          particle.color = enemy.color || '#ff4444';
+          particle.size = Math.random() * 5 + 2;
+          this.particles.push(particle);
+        }
+      }
+    });
+    
+    // Clear all enemies
     this.enemies = [];
-    this.bullets = [];
     
-    // Start stage transition animation
-    this.startStageTransition();
+    // Store player data for next stage (score and lives only)
+    this.savedScore = this.player.score;
+    this.savedHp = this.player.hp;
+    
+    console.log(`Stage ${this.currentLevel} cleared - starting clear sequence`);
+  }
+  
+  updateStageClear(dt) {
+    if (!this.isStageClearing) return;
+    
+    const now = Date.now();
+    const elapsed = now - this.stageClearTimer;
+    
+    if (this.stageClearPhase === 'message') {
+      // Show "STAGE X Clear" for 2 seconds
+      if (elapsed >= 2000) {
+        this.stageClearPhase = 'flyUp';
+        this.stageClearTimer = now;
+        this.stageClearProgress = 0;
+      }
+    } else if (this.stageClearPhase === 'flyUp') {
+      // Spaceship flies up off screen
+      this.stageClearProgress = Math.min(elapsed / 1500, 1); // 1.5 seconds
+      
+      // Move player upward
+      this.player.y = (this.canvas.height / 2) - (this.stageClearProgress * (this.canvas.height / 2 + 150));
+      
+      // Add engine trail particles
+      if (Math.random() < 0.3) {
+        const particle = this.particlePool.get();
+        if (particle) {
+          particle.x = this.player.x + (Math.random() - 0.5) * 20;
+          particle.y = this.player.y + 30;
+          particle.vx = (Math.random() - 0.5) * 2;
+          particle.vy = Math.random() * 5 + 2;
+          particle.life = 30;
+          particle.maxLife = 30;
+          particle.color = '#4488ff';
+          particle.size = Math.random() * 4 + 2;
+          this.particles.push(particle);
+        }
+      }
+      
+      if (this.stageClearProgress >= 1) {
+        this.stageClearPhase = 'wipe';
+        this.stageClearTimer = now;
+        this.wipeProgress = 0;
+      }
+    } else if (this.stageClearPhase === 'wipe') {
+      // Black screen covers from bottom to top
+      const wipeDuration = 1000; // 1 second
+      this.wipeProgress = Math.min(elapsed / wipeDuration, 1);
+      
+      if (this.wipeProgress >= 1) {
+        // Clear everything and prepare next stage
+        this.bullets = [];
+        this.particles = [];
+        this.enemiesSpawned = 0;
+        this.currentLevel++;
+        this.resetBossTimer();
+        this.callbacks.onLevelUp?.(this.currentLevel);
+        
+        // Restore player data (score and hp only)
+        this.player.score = this.savedScore;
+        this.player.hp = this.savedHp;
+        
+        // Start next stage
+        this.isStageClearing = false;
+        this.startStageTransition();
+        
+        console.log(`Transitioned to stage ${this.currentLevel}`);
+      }
+    }
+  }
+  
+  renderStageClearOverlay(ctx) {
+    if (!this.isStageClearing) return;
+    
+    if (this.stageClearPhase === 'wipe') {
+      // Black screen rising from bottom
+      const screenHeight = this.canvas.height;
+      const overlayHeight = screenHeight * this.wipeProgress;
+      
+      ctx.save();
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, screenHeight - overlayHeight, this.canvas.width, overlayHeight);
+      ctx.restore();
+    }
   }
   
   startStageTransition() {
@@ -2919,6 +3112,10 @@ class GameEngine {
       }
       ctx.restore();
     }
+  
+    // Draw overlays on top of everything
+    this.renderStageClearOverlay(ctx);
+    this.renderWipeOverlay(ctx);
   }
   
   initStars() {
