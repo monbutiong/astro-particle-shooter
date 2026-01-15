@@ -1793,6 +1793,9 @@ class GameEngine {
       for (let i = this.enemies.length - 1; i >= 0; i--) {
         const enemy = this.enemies[i];
         
+        // Skip boss enemies - orbit shield doesn't damage bosses
+        if (enemy.isBoss) continue;
+        
         for (const ball of this.orbitBalls) {
           const ballX = this.player.x + Math.cos(ball.angle) * ball.distance;
           const ballY = this.player.y + Math.sin(ball.angle) * ball.distance;
