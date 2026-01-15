@@ -66,6 +66,24 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     return `${color}${opacityMap[state] || '0.6'}`;
   };
   
+  const getAvatarBoxShadow = (state, color) => {
+    if (state === 'power-up') {
+      return `0 0 20px ${color}, 0 0 40px ${color}, 0 0 60px ${color}80`;
+    } else if (state === 'scared') {
+      return `0 0 25px #ff4444, 0 0 50px #ff444480`;
+    } else if (state === 'cry') {
+      return `0 0 20px #ff8800, 0 0 40px #ff880080`;
+    }
+    return `0 0 15px ${color}60`;
+  };
+  
+  const getAvatarAnimation = (state) => {
+    if (state === 'cry') return 'avatarShake 0.5s ease-in-out infinite';
+    if (state === 'scared') return 'avatarShake 0.3s ease-in-out infinite';
+    if (state === 'power-up') return 'avatarPulse 0.5s ease-in-out infinite';
+    return 'none';
+  };
+  
   // ==================== GAME CONTROL ====================
   const startGame = useCallback(() => {
     setGameState('loading');
@@ -287,9 +305,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
               borderRadius: '10px',
               overflow: 'hidden',
               border: `2px solid ${getAvatarBorderColor(avatarState, characterColors[characterType])}`,
-              boxShadow: `0 0 15px ${getAvatarShadowColor(avatarState, characterColors[characterType])}`,
+              boxShadow: getAvatarBoxShadow(avatarState, characterColors[characterType]),
               transition: 'all 0.3s ease',
-              animation: avatarState === 'power-up' ? 'avatarPulse 0.5s ease-in-out infinite' : 'none'
+              animation: getAvatarAnimation(avatarState)
             }}>
               <img
                 src={getAvatarImage(characterType, avatarState)}
@@ -300,8 +318,10 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   objectFit: 'contain',
                   transition: 'all 0.3s ease',
                   filter: avatarState === 'scared' ? 'brightness(0.8) hue-rotate(-20deg)' : 
-                         avatarState === 'power-up' ? 'brightness(1.3) saturate(1.5)' : 'none'
+                         avatarState === 'power-up' ? 'brightness(1.3) saturate(1.5)' : 'none',
+                  transform: avatarState === 'cry' ? 'translateX(0)' : 'none'
                 }}
+                className={avatarState === 'cry' ? 'avatar-shake' : ''}
               />
             </div>
             
@@ -1063,7 +1083,16 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
             }
             @keyframes avatarPulse {
               0%, 100% { transform: scale(1); filter: brightness(1); }
-              50% { transform: scale(1.1); filter: brightness(1.3); }
+              50% { transform: scale(1.15); filter: brightness(1.4); }
+            }
+            @keyframes avatarShake {
+              0%, 100% { transform: translateX(0); }
+              10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+              20%, 40%, 60%, 80% { transform: translateX(3px); }
+            }
+            @keyframes avatarGlow {
+              0%, 100% { box-shadow: 0 0 15px currentColor; }
+              50% { box-shadow: 0 0 30px currentColor, 0 0 45px currentColor; }
             }
           `}</style>
         </div>

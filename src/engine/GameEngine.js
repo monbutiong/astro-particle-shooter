@@ -300,7 +300,7 @@ class PowerUp {
     this.y = y;
     this.type = type;
     this.config = POWERUP_TYPES[type];
-    this.size = 12; // Reduced to 30% of original size (40 * 0.3 = 12)
+    this.size = 20; // Increased to 50% of original size (40 * 0.5 = 20)
     this.active = true;
     this.pulsePhase = Math.random() * Math.PI * 2;
     this.angle = 0;
@@ -618,7 +618,12 @@ class GameEngine {
       'ship-pink-0': '/assets/player/pink-level-0.fw.png',
       'ship-pink-1': '/assets/player/pink-level-1.fw.png',
       'ship-pink-2': '/assets/player/pink-level-2.fw.png',
-      'ship-pink-3': '/assets/player/pink-level-3.fw.png'
+      'ship-pink-3': '/assets/player/pink-level-3.fw.png',
+      // Base ships for ally companion
+      'ally-ship-blue': '/assets/player/blue-ship.fw.png',
+      'ally-ship-red': '/assets/player/red-ship.fw.png',
+      'ally-ship-yellow': '/assets/player/yellow-ship.fw.png',
+      'ally-ship-pink': '/assets/player/pink-ship.fw.png'
     };
     
     await this.assetLoader.preloadAssets(imageMap);
