@@ -1010,7 +1010,6 @@ class GameEngine {
     if (this.isRunning) return;
     this.isRunning = true;
     this.isPaused = false;
-    this.isGameOver = false; // Reset game over flag
     this.lastTime = performance.now();
     
     // ==================== START BACKGROUND MUSIC ====================

@@ -9,12 +9,92 @@ class SoundManager {
   constructor() {
     this.sounds = {};
     this.backgroundMusic = null;
+    this.audioContextUnlocked = false; // Track if audio is unlocked for Android
     this.isMuted = false;
     this.musicVolume = 0.3; // 30% volume for background music
     this.sfxVolume = 0.5;   // 50% volume for sound effects
     this.currentBossTrack = null; // Track currently playing boss music
     
     this.preloadAllSounds();
+  }
+
+  /**
+   * 🔓 Unlock audio for Android WebView and mobile browsers
+   * MUST be called after user interaction (click/tap)
+   * Call this IMMEDIATELY after game engine creation
+   */
+  async unlockAudio() {
+    if (this.audioContextUnlocked) {
+      console.log('✅ Audio already unlocked');
+      return;
+    }
+    console.log('🔓 Unlocking audio for Android/mobile...');
+
+    try {
+      // Method 1: Play and pause a silent sound (most reliable)
+      const silentAudio = new Audio();
+      silentAudio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      silentAudio.volume = 0.01; // Very low but not zero
+      
+      await silentAudio.play();
+      silentAudio.pause();
+      silentAudio.currentTime = 0;
+      console.log('✅ Audio unlocked via silent audio method');
+      
+      this.audioContextUnlocked = true;
+      return;
+    } catch (err) {
+      console.warn('⚠️ Silent audio method failed:', err);
+    }
+    
+    // Method 2: Try playing an actual sound at very low volume
+    try {
+      const testSound = this.sounds.player?.fire;
+      if (testSound) {
+        const originalVolume = testSound.volume;
+        testSound.volume = 0.01; // Very low volume
+        testSound.currentTime = 0;
+        
+        await testSound.play();
+        // Immediately pause and reset
+        setTimeout(() => {
+          testSound.pause();
+          testSound.currentTime = 0;
+          testSound.volume = originalVolume;
+        }, 50);
+        
+        console.log('✅ Audio unlocked via test sound method');
+        this.audioContextUnlocked = true;
+        return;
+      }
+    } catch (err) {
+      console.warn('⚠️ Test sound method failed:', err);
+    }
+    
+    // Method 3: Try playing background music briefly
+    try {
+      const testMusic = this.backgroundMusic?.stage1to10;
+      if (testSound) {
+        const originalVolume = testSound.volume;
+        testMusic.volume = 0.01;
+        try {
+          await testMusic.play();
+          testMusic.pause();
+          testMusic.volume = originalVolume;
+          console.log('✅ Audio unlocked via background music method');
+          this.audioContextUnlocked = true;
+          return;
+        } catch (e) {
+          console.warn('⚠️ Background music method failed:', e);
+        }
+      }
+    } catch (err) {
+      console.error('❌ All audio unlock methods failed:', err);
+    }
+    
+    // Mark as unlocked anyway (some browsers don't need explicit unlock)
+    this.audioContextUnlocked = true;
+    console.log('⚠️ Audio unlock attempted, proceeding anyway...');
   }
 
   /**
@@ -106,6 +186,16 @@ class SoundManager {
    */
   play(soundPath) {
     if (this.isMuted) return;
+    
+    // 🔓 AUTO-UNLOCK: If audio not unlocked yet, try to unlock on first play
+    if (!this.audioContextUnlocked) {
+      console.warn('⚠️ Audio not unlocked yet, attempting auto-unlock...');
+      this.unlockAudio().then(() => {
+        console.log('✅ Audio auto-unlocked, retrying sound:', soundPath);
+        this.play(soundPath); // Retry after unlock
+      });
+      return;
+    }
 
     try {
       const parts = soundPath.split('.');

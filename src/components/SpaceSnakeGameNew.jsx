@@ -237,8 +237,15 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
   const preloadAndStart = useCallback(async (canvas, callbacks, charType) => {
     if (!canvas || gameEngineRef.current) return;
     
+    console.log('🎮 Creating game engine...');
     const engine = new GameEngine(canvas, callbacks);
     gameEngineRef.current = engine;
+    
+    // 🔓 UNLOCK AUDIO FOR ANDROID/MOBILE IMMEDIATELY AFTER ENGINE CREATION
+    // This MUST be called after user interaction and before any audio plays
+    console.log('🔓 Unlocking audio for Android/mobile...');
+    await engine.soundManager.unlockAudio();
+    console.log('✅ Audio unlocked successfully!');
     
     // Preload all game assets
     await engine.preloadAssets();
@@ -249,8 +256,10 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     // Reset game state (includes boss timer initialization)
     engine.reset();
     
+    console.log('🚀 Starting game engine...');
     // Start the game
     engine.start();
+    console.log('✅ Game started!');
   }, []);
   
   // ==================== CANVAS SETUP ====================
