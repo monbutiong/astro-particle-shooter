@@ -1988,8 +1988,12 @@ class GameEngine {
     }
     
     this.player.invincible = 2000;
+    this.player.invincible = 2000;
     this.createParticles(this.player.x, this.player.y, this.player.color, 20);
     this.callbacks.onPlayerHit?.(this.player.hp);
+    
+    // ==================== PLAYER HIT SOUND ====================
+    this.soundManager?.play('player.hit'); // Player hit sound!
     
     if (this.player.hp <= 0) {
       // EPIC explosion on last life!
@@ -2823,6 +2827,11 @@ class GameEngine {
     this.enemies.push(boss);
     console.log(`Boss spawned: ${bossConfig.name} (Stage ${bossConfig.stage})`);
     this.callbacks.onBossSpawn?.(bossConfig.stage);
+    
+    // ==================== BOSS MUSIC START ====================
+    // Start boss fight background music (alternates between track 1 & 2 based on stage)
+    this.soundManager?.playBossMusic(this.currentLevel);
+    console.log(`🎵 Boss fight music started for Stage ${this.currentLevel}`);
   }
   
   // Helper function to get boss configuration for current level
@@ -2864,6 +2873,11 @@ class GameEngine {
     
     // ==================== STAGE CLEAR SOUND ====================
     this.soundManager?.play('ui.winFireworks'); // Victory/fireworks sound!
+    
+    // ==================== BOSS MUSIC STOP ====================
+    // Stop boss fight music and resume normal background music
+    this.soundManager?.stopBossMusic(this.currentLevel);
+    console.log(`🎵 Boss fight music stopped, returning to normal stage music`);
     
     // Explode all remaining enemies instantly
     this.enemies.forEach(enemy => {
@@ -3032,6 +3046,11 @@ class GameEngine {
     // Show warning only at configured time (6 seconds before boss)
     const warningTime = GAME_CONFIG.BOSS_WARNING_TIME;
     if (this.bossTimer <= warningTime && this.bossTimer > warningTime - 1000 && !this.bossActive && !this.bossWarningShown) {
+      // ==================== BOSS WARNING SOUND ====================
+      // Stop normal background music when boss warning plays
+      this.soundManager?.stopBackgroundMusic();
+      this.soundManager?.play('ui.bossWarning'); // Boss incoming warning!
+      
       this.bossWarningShown = true;
       this.callbacks.onBossWarning?.({
         time: warningTime / 1000, // 6 seconds
