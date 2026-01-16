@@ -130,7 +130,6 @@ class SoundManager {
     }
   }
 
-  /**
    * Play background music based on current stage
    * @param {number} stage - Current game stage
    */
@@ -148,7 +147,13 @@ class SoundManager {
       track = this.backgroundMusic.stage31toAll;
     }
 
-    if (track && track !== this.currentBackgroundTrack) {
+    if (track) {
+      // Always play if track exists (remove the check to allow replay after boss music)
+      // Only skip if this exact track is already playing
+      if (track === this.currentBackgroundTrack && !this.currentBackgroundTrack.paused) {
+        return; // Already playing this track
+      }
+      
       // Stop current music
       if (this.currentBackgroundTrack) {
         this.currentBackgroundTrack.pause();
