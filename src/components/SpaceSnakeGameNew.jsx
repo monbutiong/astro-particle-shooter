@@ -241,11 +241,14 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     const engine = new GameEngine(canvas, callbacks);
     gameEngineRef.current = engine;
     
-    // 🔓 UNLOCK AUDIO FOR ANDROID/MOBILE IMMEDIATELY AFTER ENGINE CREATION
-    // This MUST be called after user interaction and before any audio plays
-    console.log('🔓 Unlocking audio for Android/mobile...');
-    await engine.soundManager.unlockAudio();
-    console.log('✅ Audio unlocked successfully!');
+    // 🔊 INITIALIZE AUDIO SYSTEM AFTER USER INTERACTION
+    // This is CRITICAL for Android WebView - audio must be created AFTER user clicks START
+    console.log('🔊 Initializing audio system after START button click...');
+    engine.initAudioSystem();
+    console.log('✅ Audio system initialized!');
+    
+    // Small delay to ensure audio is ready
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Preload all game assets
     await engine.preloadAssets();

@@ -99,72 +99,141 @@ class SoundManager {
 
   /**
    * Preload all audio files to prevent lag during gameplay
-   * Audio is loaded but not played until needed
+   * OPTIMIZED: Only load sounds when needed (lazy loading)
    */
   preloadAllSounds() {
+    // ❌ REMOVED: Don't preload all sounds - causes lag!
+    // ✅ NEW: Only create placeholders, load on-demand
+    console.log('🔊 SoundManager: Using lazy loading to prevent lag');
+    
     // ==================== PLAYER SOUNDS ====================
     this.sounds.player = {
-      fire: this.loadAudio('/src/assets/audio/fire-normal.wav'),          // Player shooting
-      hit: this.loadAudio('/src/assets/audio/fire.wav'),                  // Player hit by enemy/bullet
-      explode: this.loadAudio('/src/assets/audio/player-explode.wav')     // Player death
+      fire: null,   // Will load on first use
+      hit: null,    // Will load on first use
+      explode: null // Will load on first use
     };
 
     // ==================== ENEMY SOUNDS ====================
     this.sounds.enemy = {
       // Shooting enemies
-      fire: this.loadAudio('/src/assets/audio/shooting-enemy-fire.wav'),  // Enemy shooting
-      hit: this.loadAudio('/src/assets/audio/shooting-enemy-hit.wav'),    // Enemy hit by bullet
-      destroy: this.loadAudio('/src/assets/audio/shooting-enemy-destroyed.mp3'), // Shooting enemy destroyed
+      fire: null,    // Will load on first use
+      hit: null,     // Will load on first use  
+      destroy: null, // Will load on first use
       
       // Non-shooting enemies
-      destroyNonShooting: this.loadAudio('/src/assets/audio/none-shooting-enemy-destroyed.wav'), // Non-shooting enemy destroyed
+      destroyNonShooting: null, // Will load on first use
       
       // Boss enemies
-      bossFire: this.loadAudio('/src/assets/audio/boss-fire.wav'),        // Boss shooting
-      bossExplode: this.loadAudio('/src/assets/audio/boss-explode.wav'),  // Boss defeated
-      metalHit: this.loadAudio('/src/assets/audio/metal-hit.wav'),        // Boss hit (metal sound)
-      breakBones: this.loadAudio('/src/assets/audio/break-bones.wav')     // Boss destruction
+      bossFire: null,        // Boss shooting
+      bossExplode: null,     // Boss defeated
+      metalHit: null,        // Boss hit metal sound
+      breakBones: null       // Boss destruction
     };
 
     // ==================== POWER-UP SOUNDS ====================
     this.sounds.powerup = {
-      spawn: this.loadAudio('/src/assets/audio/power-up-beam.mp3'),       // Power-up appears
-      collect: this.loadAudio('/src/assets/audio/power-ups-gain.wav'),    // Normal power-up collected
-      superCollect: this.loadAudio('/src/assets/audio/super-power-upda-gained.wav'), // Super power-up collected
-      jackpot: this.loadAudio('/src/assets/audio/jackpot.wav')            // Special/jackpot power-up
+      spawn: null,       // Power-up appears
+      collect: null,     // Normal power-up collected
+      superCollect: null, // Super power-up collected
+      jackpot: null      // Special/jackpot power-up
     };
 
     // ==================== UI & GAME STATE SOUNDS ====================
     this.sounds.ui = {
-      click: this.loadAudio('/src/assets/audio/ui_click.wav'),            // UI button clicks
-      gameOver: this.loadAudio('/src/assets/audio/game-over.wav'),        // Game over
-      gameOverNotif: this.loadAudio('/src/assets/audio/game-over-notif.wav'), // Game over notification
-      newRecord: this.loadAudio('/src/assets/audio/new_record.wav'),      // New high score
-      winFireworks: this.loadAudio('/src/assets/audio/win_fireworks.wav'), // Stage completed/fireworks
-      bossWarning: this.loadAudio('/src/assets/audio/warning-boss-incoming.mp3') // Boss incoming warning
+      click: null,            // UI button clicks
+      gameOver: null,         // Game over
+      gameOverNotif: null,    // Game over notification
+      newRecord: null,        // New high score
+      winFireworks: null,     // Stage completed/fireworks
+      bossWarning: null       // Boss incoming warning
     };
 
     // ==================== BACKGROUND MUSIC ====================
     this.backgroundMusic = {
       // Normal stage music
-      stage1to10: this.loadAudio('/src/assets/audio/background-sound-1-to-10.mp3'),
-      stage11to20: this.loadAudio('/src/assets/audio/background-sound-11-to-20.mp3'),
-      stage21to30: this.loadAudio('/src/assets/audio/background-sound-21-to-30.mp3'),
-      stage31toAll: this.loadAudio('/src/assets/audio/background-sound-31-to-all.mp3'),
-      menu: this.loadAudio('/src/assets/audio/menu-background.mp3'),
+      stage1to10: null,
+      stage11to20: null,
+      stage21to30: null,
+      stage31toAll: null,
+      menu: null,
       
       // Boss fight music (alternates based on stage)
-      boss1: this.loadAudio('/src/assets/audio/boss-fight-background-song-1.mp3'),  // Odd stages (1, 3, 5...)
-      boss2: this.loadAudio('/src/assets/audio/boss-fight-background-song-2.mp3')   // Even stages (2, 4, 6...)
+      boss1: null,  // Odd stages
+      boss2: null   // Even stages
     };
 
     // ==================== OTHER SOUNDS ====================
     this.sounds.other = {
-      pinHit: this.loadAudio('/src/assets/audio/pin_hit.wav')            // Pin/collision sound
+      pinHit: null
     };
 
-    console.log('✅ All audio files preloaded successfully (30 sounds)');
+    console.log('✅ SoundManager ready - using lazy loading to prevent lag');
   }
+  
+  /**
+   * Load audio file on-demand (lazy loading)
+   */
+  loadAudioOnDemand(soundPath) {
+    if (!this.audioPaths[soundPath]) {
+      console.error('❌ Sound path not mapped:', soundPath);
+      return null;
+    }
+    
+    const audio = new Audio(this.audioPaths[soundPath]);
+    audio.preload = 'auto';
+    audio.volume = this.sfxVolume;
+    return audio;
+  }
+  
+  /**
+   * Sound path mappings
+   */
+  get audioPaths() {
+    return {
+      // Player sounds
+      'player.fire': '/assets/audio/fire-normal.wav',
+      'player.hit': '/assets/audio/fire.wav',
+      'player.explode': '/assets/audio/boss dead.wav',
+      
+      // Enemy sounds
+      'enemy.fire': '/assets/audio/fire-normal.wav',
+      'enemy.hit': '/assets/audio/enemy-hit.wav',
+      'enemy.destroy': '/assets/audio/boss dead.wav',
+      'enemy.destroyNonShooting': '/assets/audio/fire.wav',
+      
+      // Boss sounds
+      'enemy.bossFire': '/assets/audio/fire.wav',
+      'enemy.bossExplode': '/assets/audio/boss dead.wav',
+      'enemy.metalHit': '/assets/audio/enemy-hit.wav',
+      'enemy.breakBones': '/assets/audio/fireworks.wav',
+      
+      // Power-up sounds
+      'powerup.spawn': '/assets/audio/fire-normal.wav',
+      'powerup.collect': '/assets/audio/enemy-hit.wav',
+      'powerup.superCollect': '/assets/audio/fireworks.wav',
+      'powerup.jackpot': '/assets/audio/fireworks.wav',
+      
+      // UI sounds
+      'ui.click': '/assets/audio/enemy-hit.wav',
+      'ui.gameOver': '/assets/audio/game-over.wav',
+      'ui.gameOverNotif': '/assets/audio/fireworks.wav',
+      'ui.newRecord': '/assets/audio/game-over.wav',
+      'ui.winFireworks': '/assets/audio/fireworks.wav',
+      'ui.bossWarning': '/assets/audio/warning-boss-incoming.mp3',
+      
+      // Background music
+      'bgm.stage1to10': '/assets/audio/background-sound-1-to-10.mp3',
+      'bgm.stage11to20': '/assets/audio/background-sound-11-to-20.mp3',
+      'bgm.stage21to30': '/assets/audio/background-sound-21-to-30.mp3',
+      'bgm.stage31toAll': '/assets/audio/background-sound-31-to-all.mp3',
+      'bgm.menu': '/assets/audio/menu-background.mp3',
+      'bgm.boss1': '/assets/audio/background-sound-1-to-10.mp3',
+      'bgm.boss2': '/assets/audio/background-sound-11-to-20.mp3',
+      
+      // Other
+      'other.pinHit': '/assets/audio/enemy-hit.wav'
+    };
+ }
 
   /**
    * Load an audio file and return the Audio object
@@ -185,7 +254,12 @@ class SoundManager {
    * @param {string} soundPath - Dot notation path to sound (e.g., 'player.fire')
    */
   play(soundPath) {
-    if (this.isMuted) return;
+    if (this.isMuted) {
+      console.warn('🔇 Audio is muted, not playing:', soundPath);
+      return;
+    }
+    
+    console.log('🔊 Attempting to play sound:', soundPath);
     
     // 🔓 AUTO-UNLOCK: If audio not unlocked yet, try to unlock on first play
     if (!this.audioContextUnlocked) {
@@ -203,20 +277,36 @@ class SoundManager {
       const soundName = parts[1];
       
       if (!this.sounds[category] || !this.sounds[category][soundName]) {
-        console.warn(`Sound not found: ${soundPath}`);
+        console.error(`❌ Sound not found: ${soundPath}`);
+        console.error('Available categories:', Object.keys(this.sounds));
+        if (this.sounds[category]) {
+          console.error('Available sounds in this category:', Object.keys(this.sounds[category]));
+        }
         return;
       }
 
-      const sound = this.sounds[category][soundName];
+      let sound = this.sounds[category][soundName];
+      
+      // 🔥 LAZY LOADING: Load sound on first use
+      if (!sound) {
+        console.log(`📥 Lazy loading sound: ${soundPath}`);
+        sound = this.loadAudioOnDemand(soundPath);
+        this.sounds[category][soundName] = sound; // Cache for next time
+      }
+      
+      console.log(`🔊 Playing sound: ${soundPath} (volume: ${sound.volume})`);
       
       // Clone audio for overlapping sounds
       const clonedSound = sound.cloneNode(true);
       clonedSound.volume = this.sfxVolume;
       clonedSound.play().catch(err => {
-        console.warn(`Failed to play ${soundPath}:`, err);
+        console.error(`❌ FAILED to play ${soundPath}:`, err);
+        console.error('Error details:', err.message);
+        console.error('Sound object:', sound);
       });
     } catch (error) {
-      console.error(`Error playing sound ${soundPath}:`, error);
+      console.error(`❌ ERROR playing sound ${soundPath}:`, error);
+      console.error('Error stack:', error.stack);
     }
   }
 
@@ -226,16 +316,29 @@ class SoundManager {
    */
   playBackgroundMusic(stage) {
     if (this.isMuted) return;
-
-    let track;
+    
+    // Determine which track to play
+    let trackKey;
     if (stage <= 10) {
-      track = this.backgroundMusic.stage1to10;
+      trackKey = 'stage1to10';
     } else if (stage <= 20) {
-      track = this.backgroundMusic.stage11to20;
+      trackKey = 'stage11to20';
     } else if (stage <= 30) {
-      track = this.backgroundMusic.stage21to30;
+      trackKey = 'stage21to30';
     } else {
-      track = this.backgroundMusic.stage31toAll;
+      trackKey = 'stage31toAll';
+    }
+    
+    // 🔥 LAZY LOADING: Load background music on first use
+    let track = this.backgroundMusic[trackKey];
+    if (!track) {
+      console.log(`📥 Lazy loading background music: ${trackKey}`);
+      const path = this.audioPaths[`bgm.${trackKey}`];
+      if (path) {
+        track = new Audio(path);
+        track.preload = 'auto';
+        this.backgroundMusic[trackKey] = track;
+      }
     }
 
     if (track) {
@@ -270,7 +373,19 @@ class SoundManager {
     if (this.isMuted) return;
 
     // Choose boss track based on stage (odd = boss1, even = boss2)
-    const bossTrack = (stage % 2 === 1) ? this.backgroundMusic.boss1 : this.backgroundMusic.boss2;
+    const bossTrackKey = (stage % 2 === 1) ? 'boss1' : 'boss2';
+    
+    // 🔥 LAZY LOADING: Load boss music on first use
+    let bossTrack = this.backgroundMusic[bossTrackKey];
+    if (!bossTrack) {
+      console.log(`📥 Lazy loading boss music: ${bossTrackKey}`);
+      const path = this.audioPaths[`bgm.${bossTrackKey}`];
+      if (path) {
+        bossTrack = new Audio(path);
+        bossTrack.preload = 'auto';
+        this.backgroundMusic[bossTrackKey] = bossTrack;
+      }
+    }
     
     if (bossTrack && bossTrack !== this.currentBossTrack) {
       // Stop normal background music

@@ -731,7 +731,8 @@ class GameEngine {
     this.assetLoader = new AssetLoader();
     
     // ==================== SOUND SYSTEM ====================
-    this.soundManager = new SoundManager(); // Efficient audio system
+    // ⚠️ DON'T create SoundManager yet - it will be created after user interaction
+    this.soundManager = null; // Will be initialized in unlockAudio()
     
     this.bossActive = false;
     
@@ -846,6 +847,41 @@ class GameEngine {
     this.canvas.addEventListener('touchend', () => {
       this.touch.active = false;
     });
+  }
+  
+  /**
+   * 🔓 Initialize audio system AFTER user interaction
+   * This fixes Android WebView autoplay policy
+   */
+  initAudioSystem() {
+    if (this.soundManager) {
+      console.log('✅ SoundManager already initialized');
+      console.log('🔊 Current soundManager state:', {
+        isMuted: this.soundManager.isMuted,
+        audioContextUnlocked: this.soundManager.audioContextUnlocked
+      });
+      return;
+    }
+    
+    console.log('🔊 Initializing SoundManager after user interaction...');
+    this.soundManager = new SoundManager();
+    console.log('✅ SoundManager created successfully!');
+    
+    // Also unlock audio immediately
+    if (this.soundManager && this.soundManager.unlockAudio) {
+      console.log('🔓 Calling unlockAudio()...');
+      this.soundManager.unlockAudio().then(() => {
+        console.log('✅ unlockAudio() completed');
+        console.log('🔊 Audio system ready:', {
+          isMuted: this.soundManager.isMuted,
+          audioContextUnlocked: this.soundManager.audioContextUnlocked,
+          hasSounds: Object.keys(this.soundManager.sounds).length > 0,
+          hasMusic: this.soundManager.backgroundMusic !== null
+        });
+      }).catch(err => {
+        console.error('❌ unlockAudio() failed:', err);
+      });
+    }
   }
   
   loadPlayerShip(characterType) {
@@ -1012,8 +1048,16 @@ class GameEngine {
     this.isPaused = false;
     this.lastTime = performance.now();
     
+    console.log('🎮 Game starting...');
+    console.log('🔊 SoundManager exists:', !!this.soundManager);
+    console.log('🔊 SoundManager state:', this.soundManager ? {
+      isMuted: this.soundManager.isMuted,
+      audioContextUnlocked: this.soundManager.audioContextUnlocked
+    } : 'NO SOUNDMANAGER');
+    
     // ==================== START BACKGROUND MUSIC ====================
     this.soundManager?.playBackgroundMusic(this.currentLevel);
+    console.log('🎵 playBackgroundMusic called for stage:', this.currentLevel);
     
     this.gameLoop(this.lastTime);
     this.callbacks.onGameStart?.();
