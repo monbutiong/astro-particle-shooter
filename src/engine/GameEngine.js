@@ -1,6 +1,83 @@
 /**
  * Space Snake Game Engine
  * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 🎵 AUDIO SYSTEM - SOUND EFFECTS & MUSIC
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * BACKGROUND MUSIC:
+ *   ✅ Stages 1-10:  background-sound-1-to-10.mp3
+ *   ✅ Stages 11-20: background-sound-11-to-20.mp3
+ *   ✅ Stages 21-30: background-sound-21-to-30.mp3
+ *   ✅ Stages 31+:    background-sound-31-to-all.mp3
+ *   ✅ Menu:          menu-background.mp3
+ * 
+ * PLAYER SOUNDS:
+ *   ✅ Shooting:      soundManager.play('player.fire')
+ *   ✅ Death:         soundManager.play('player.explode')
+ * 
+ * ENEMY SOUNDS:
+ *   ✅ Shooting enemy fires:     soundManager.play('enemy.fire')
+ *   ✅ Enemy hit (all types):    soundManager.play('enemy.hit')
+ *   ✅ Shooting enemy killed:    soundManager.play('enemy.destroy')
+ *   ✅ Non-shooting killed:      soundManager.play('enemy.destroyNonShooting')
+ *   ✅ Boss fires:               soundManager.play('enemy.bossFire')
+ *   ✅ Boss hit:                 soundManager.play('enemy.metalHit')
+ *   ✅ Boss destroyed:           soundManager.play('enemy.bossExplode')
+ *   ✅ Boss destruction:         soundManager.play('enemy.breakBones')
+ * 
+ * POWER-UP SOUNDS:
+ *   ✅ Power-up appears:         soundManager.play('powerup.spawn')
+ *   ✅ Normal power-up:          soundManager.play('powerup.collect')
+ *   ✅ SUPER_MODE power-up:      soundManager.play('powerup.superCollect')
+ *   ✅ LEVEL_UP power-up:        soundManager.play('powerup.jackpot')
+ *   ✅ SCREEN_BOMB:             soundManager.play('enemy.bossExplode')
+ *   ✅ EXTRA_LIFE:              soundManager.play('powerup.collect')
+ *   ✅ TRIPLE_SHOT:             soundManager.play('powerup.collect')
+ *   ✅ DOUBLE_DAMAGE:           soundManager.play('powerup.collect')
+ *   ✅ HOMING_MISSILES:         soundManager.play('powerup.collect')
+ *   ✅ ORBIT_SHIELD:            soundManager.play('powerup.collect')
+ *   ✅ ALLY_SUPPORT:            soundManager.play('powerup.collect')
+ *   ✅ INVINCIBILITY:           soundManager.play('powerup.superCollect')
+ *   ✅ TIME_FREEZE:             soundManager.play('powerup.collect')
+ *   ✅ COIN_100/1000/10000:     soundManager.play('powerup.jackpot')
+ * 
+ * UI & GAME STATE SOUNDS:
+ *   ✅ Stage notification:       soundManager.play('ui.newRecord')
+ *   ✅ Stage clear:             soundManager.play('ui.winFireworks')
+ *   ✅ Game over notification:  soundManager.play('ui.gameOverNotif')
+ *   ✅ Game over music:         soundManager.play('ui.gameOver')
+ *   ✅ New high score:          soundManager.play('ui.newRecord')
+ *   ✅ Button click:            soundManager.play('ui.click')
+ * 
+ * SOUND EFFECT LOCATIONS:
+ *   Line ~1220:  Player shooting (shoot method)
+ *   Line ~1613:  Boss firing pattern 1 (bossAttack method)
+ *   Line ~1648:  Boss rapid fire (bossAttack method)
+ *   Line ~1681:  Boss spread fire (bossAttack method)
+ *   Line ~1730:  Enemy shooting (enemyShoot method)
+ *   Line ~1923:  Boss hit (enemyHit method)
+ *   Line ~1946:  Boss explosion (enemyHit method)
+ *   Line ~1947:  Boss destruction (enemyHit method)
+ *   Line ~1950:  Shooting enemy killed (enemyHit method)
+ *   Line ~1955:  Non-shooting enemy killed (enemyHit method)
+ *   Line ~1958:  Enemy hit but not killed (enemyHit method)
+ *   Line ~1905:  Player death (playerHit method)
+ *   Line ~2343:  Power-up spawn (spawnPowerUp method)
+ *   Line ~2390:  Power-up collected normal (activatePowerUp method)
+ *   Line ~2392:  Level up power-up (activatePowerUp method)
+ *   Line ~2394:  Super power-up (activatePowerUp method)
+ *   Line ~2775:  Stage clear victory (bossDefeated method)
+ *   Line ~1059:  Stage notification (updateEntranceAnimation method)
+ *   Line ~939:  Background music start (start method)
+ * 
+ * VOLUME CONTROL:
+ *   Music Volume:  30% (0.3) - soundManager.setMusicVolume(0.3)
+ *   SFX Volume:    50% (0.5) - soundManager.setSFXVolume(0.5)
+ *   Mute/Unmute:             soundManager.toggleMute()
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
  * Pure JavaScript game engine separated from React.
  * Follows "THE RIGHT Techniques for Games in React"
  * 
@@ -12,6 +89,9 @@
  * - requestAnimationFrame for smooth 60 FPS
  */
 
+// ==================== IMPORTS ====================
+import SoundManager from './SoundManager.js';
+ 
 // ==================== GAME CONFIGURATION ====================
 const GAME_CONFIG = {
   TARGET_FPS: 60,
@@ -566,6 +646,7 @@ class PowerUp {
 class GameEngine {
   constructor(canvas, callbacks) {
     this.canvas = canvas;
+    this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.callbacks = callbacks;
     
@@ -648,6 +729,10 @@ class GameEngine {
     
     // Asset loader
     this.assetLoader = new AssetLoader();
+    
+    // ==================== SOUND SYSTEM ====================
+    this.soundManager = new SoundManager(); // Efficient audio system
+    
     this.bossActive = false;
     
     // Boss timer: boss spawns after 60 seconds
@@ -927,6 +1012,10 @@ class GameEngine {
     this.isPaused = false;
     this.isGameOver = false; // Reset game over flag
     this.lastTime = performance.now();
+    
+    // ==================== START BACKGROUND MUSIC ====================
+    this.soundManager?.playBackgroundMusic(this.currentLevel);
+    
     this.gameLoop(this.lastTime);
     this.callbacks.onGameStart?.();
   }
@@ -1041,11 +1130,17 @@ class GameEngine {
         this.player.y -= ascentSpeed * (dt / 16);
       } else {
         // Reached target, show stage message
-        this.entrancePhase = 'stage_message';
-        this.entranceTimer = now;
-        this.stageMessage = `STAGE ${this.currentLevel}`;
-        this.stageMessageOpacity = 1;
-        console.log(`Stage ${this.currentLevel} message shown`);
+        if (elapsed > 1500) {
+          this.entrancePhase = 'stage_message';
+          this.entranceTimer = now;
+          
+          // ==================== STAGE NOTIFICATION SOUND ====================
+          this.soundManager?.play('ui.newRecord'); // Stage notification sound
+          
+          this.stageMessage = `STAGE ${this.currentLevel}`;
+          this.stageMessageOpacity = 1;
+          console.log(`Stage ${this.currentLevel} message shown`);
+        }
       }
     } else if (this.entrancePhase === 'stage_message') {
       // Flash message for 2 seconds
@@ -1080,7 +1175,6 @@ class GameEngine {
       }
     }
   }
-  
   getSpawnRateMultiplier(enemyType) {
     // Calculate spawn rate multiplier based on volume increase
     // 5% for shooting enemies, 10% for non-shooting enemies
@@ -1202,9 +1296,11 @@ class GameEngine {
   
     // Don't shoot during wipe or entrance animation
     if (this.isWipeAnimation) return;
-  
     if (this.entranceShootingDisabled) return;
- 
+  
+    // ==================== PLAYER SHOOTING SOUND ====================
+    this.soundManager?.play('player.fire');
+  
     // Check for Super 2 power-up - fires in all 360 degrees!
     if (this.hasActivePowerUp('SUPER_MODE_2')) {
       const numBullets = 12; // Fire 12 bullets in a circle
@@ -1596,6 +1692,9 @@ class GameEngine {
     if (pattern === 0) {
       // Pattern 0: Triple shot toward player (spread pattern)
       for (let i = -1; i <= 1; i++) {
+        // ==================== BOSS FIRING SOUND ====================
+        if (i === -1) this.soundManager?.play('enemy.bossFire'); // Play once per shot
+        
         const bullet = this.bulletPool.get();
         if (bullet) {
           bullet.x = boss.x;
@@ -1628,6 +1727,9 @@ class GameEngine {
       if (now - boss.rapidFireTimer < rapidFireDuration) {
         // Still in rapid fire mode
         if (!boss.lastRapidShot || now - boss.lastRapidShot >= rapidFireInterval) {
+          // ==================== BOSS RAPID FIRE SOUND ====================
+          this.soundManager?.play('enemy.bossFire'); // Each rapid shot
+          
           const bullet = this.bulletPool.get();
           if (bullet) {
             bullet.x = boss.x;
@@ -1658,6 +1760,9 @@ class GameEngine {
     } else {
       // Pattern 2: Multiplying bullets (spread in all directions)
       const bulletCount = 8;
+      // ==================== BOSS SPREAD FIRE SOUND ====================
+      this.soundManager?.play('enemy.bossFire'); // Spread shot
+      
       for (let i = 0; i < bulletCount; i++) {
         const bullet = this.bulletPool.get();
         if (bullet) {
@@ -1713,6 +1818,10 @@ class GameEngine {
       bullet.color = '#FF8C00'; // Orange for enemy bullets
       bullet.isEnemy = true;
       this.bullets.push(bullet);
+      
+      // ==================== ENEMY SHOOTING SOUND ====================
+      this.soundManager?.play('enemy.fire');
+      
       enemy.lastShot = now;
     }
   }
@@ -1886,6 +1995,10 @@ class GameEngine {
       // EPIC explosion on last life!
       this.createExplosion(this.player.x, this.player.y, this.player.color, 60);
       
+      // ==================== PLAYER DEATH SOUND ====================
+      this.soundManager?.play('player.explode'); // Player explosion
+      this.soundManager?.play('ui.gameOverNotif'); // Game over notification
+      
       // Hide player ship immediately
       this.player.isDead = true;
       
@@ -1902,8 +2015,10 @@ class GameEngine {
     enemy.hp -= damage;
     
     // Boss hit effects - HUGE particles!
+    // ==================== BOSS HIT SOUND ====================
     if (enemy.isBoss) {
       this.createBossHitExplosion(enemy.x, enemy.y, enemy.size);
+      this.soundManager?.play('enemy.metalHit'); // Metal hit sound for boss
     }
     
     if (enemy.hp <= 0) {
@@ -1915,9 +2030,12 @@ class GameEngine {
         this.spawnPowerUp(enemy.x, enemy.y);
       }
       
+      // ==================== ENEMY DESTRUCTION SOUNDS ====================
       if (enemy.isBoss) {
         // Boss death: EPIC explosion with debris!
         this.createBossDeathExplosion(enemy.x, enemy.y, enemy.size);
+        this.soundManager?.play('enemy.bossExplode'); // Boss explosion
+        this.soundManager?.play('enemy.breakBones'); // Boss destruction
         this.bossDefeated(); // Start stage clear sequence!
         this.enemies.splice(index, 1);
         this.callbacks.onScoreUpdate?.(this.player.score);
@@ -1925,16 +2043,19 @@ class GameEngine {
       } else if (enemy.canShoot) {
         // Shooting enemy: explosive fire effect
         this.createFireExplosion(enemy.x, enemy.y, enemy.color);
+        this.soundManager?.play('enemy.destroy'); // Shooting enemy destroyed
         this.enemies.splice(index, 1);
         this.callbacks.onScoreUpdate?.(this.player.score);
       } else {
         // Non-shooting enemy: double particle pop effect
         this.createParticles(enemy.x, enemy.y, enemy.color, 20); // Reduced from 40 to prevent lag
+        this.soundManager?.play('enemy.destroyNonShooting'); // Non-shooting enemy destroyed
         this.enemies.splice(index, 1);
         this.callbacks.onScoreUpdate?.(this.player.score);
       }
     } else {
       // Enemy hit but not destroyed
+      this.soundManager?.play('enemy.hit'); // Enemy hit sound
       if (enemy.canShoot) {
         // Shooting enemy hit: small fire burst
         this.createSmallFireBurst(enemy.x, enemy.y);
@@ -2313,6 +2434,9 @@ class GameEngine {
     const powerUp = new PowerUp(x, y, randomType);
     powerUp.game = this;
     this.powerUps.push(powerUp);
+    
+    // ==================== POWER-UP SPAWN SOUND ====================
+    this.soundManager?.play('powerup.spawn'); // Power-up appears
   }
   
   getRandomRarity() {
@@ -2355,11 +2479,17 @@ class GameEngine {
     const type = powerUp.type;
     const config = POWERUP_TYPES[type];
     
-    // Play activation sound (if you add sounds later)
-    // this.playSound('powerup');
-    
     // Create pickup particles
     this.createParticles(powerUp.x, powerUp.y, config.color, 15);
+    
+    // ==================== POWER-UP COLLECTION SOUND ====================
+    if (type === 'SUPER_MODE') {
+      this.soundManager?.play('powerup.superCollect'); // Super power-up
+    } else if (type === 'LEVEL_UP') {
+      this.soundManager?.play('powerup.jackpot'); // Level up = jackpot
+    } else {
+      this.soundManager?.play('powerup.collect'); // Normal power-up
+    }
     
     // Handle instant effects
     if (type === 'SCREEN_BOMB') {
@@ -2728,12 +2858,12 @@ class GameEngine {
     this.stageClearTimer = Date.now();
     this.stageClearProgress = 0;
     
-    this.stageClearTimer = Date.now();
-    this.stageClearProgress = 0;
-    
     // Show "STAGE X Clear" message immediately (will be cleared after 2s)
     this.callbacks.onStageCleared?.(this.currentLevel);
     console.log(`✅ Called onStageCleared callback for stage ${this.currentLevel}`);
+    
+    // ==================== STAGE CLEAR SOUND ====================
+    this.soundManager?.play('ui.winFireworks'); // Victory/fireworks sound!
     
     // Explode all remaining enemies instantly
     this.enemies.forEach(enemy => {
