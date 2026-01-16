@@ -1273,7 +1273,7 @@ class GameEngine {
     if (this.touch.active) {
       // Offset: finger should be at the bottom of the ship
       // This prevents finger from covering the ship on mobile
-      const targetY = this.touch.y - 50; // 50px offset (finger below ship)
+      const targetY = this.touch.y - 90; // 90px offset (finger below ship)
       const targetX = this.touch.x;
       
       const dx = targetX - this.player.x;

@@ -130,6 +130,7 @@ class SoundManager {
     }
   }
 
+  /**
    * Play background music based on current stage
    * @param {number} stage - Current game stage
    */
