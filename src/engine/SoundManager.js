@@ -1,6 +1,8 @@
 /**
  * SoundManager - Efficient Audio System for Space Snake Game
  * Preloads all audio and provides organized sound playback methods
+ * 
+ * Version 2.0 - Added boss fight music and player hit sounds
  */
 
 class SoundManager {
@@ -10,6 +12,7 @@ class SoundManager {
     this.isMuted = false;
     this.musicVolume = 0.3; // 30% volume for background music
     this.sfxVolume = 0.5;   // 50% volume for sound effects
+    this.currentBossTrack = null; // Track currently playing boss music
     
     this.preloadAllSounds();
   }
@@ -19,18 +22,10 @@ class SoundManager {
    * Audio is loaded but not played until needed
    */
   preloadAllSounds() {
-    // ==================== BACKGROUND MUSIC ====================
-    this.backgroundMusic = {
-      stage1to10: this.loadAudio('/src/assets/audio/background-sound-1-to-10.mp3'),
-      stage11to20: this.loadAudio('/src/assets/audio/background-sound-11-to-20.mp3'),
-      stage21to30: this.loadAudio('/src/assets/audio/background-sound-21-to-30.mp3'),
-      stage31toAll: this.loadAudio('/src/assets/audio/background-sound-31-to-all.mp3'),
-      menu: this.loadAudio('/src/assets/audio/menu-background.mp3')
-    };
-
     // ==================== PLAYER SOUNDS ====================
     this.sounds.player = {
       fire: this.loadAudio('/src/assets/audio/fire-normal.wav'),          // Player shooting
+      hit: this.loadAudio('/src/assets/audio/fire.wav'),                  // Player hit by enemy/bullet
       explode: this.loadAudio('/src/assets/audio/player-explode.wav')     // Player death
     };
 
@@ -65,7 +60,22 @@ class SoundManager {
       gameOver: this.loadAudio('/src/assets/audio/game-over.wav'),        // Game over
       gameOverNotif: this.loadAudio('/src/assets/audio/game-over-notif.wav'), // Game over notification
       newRecord: this.loadAudio('/src/assets/audio/new_record.wav'),      // New high score
-      winFireworks: this.loadAudio('/src/assets/audio/win_fireworks.wav') // Stage completed/fireworks
+      winFireworks: this.loadAudio('/src/assets/audio/win_fireworks.wav'), // Stage completed/fireworks
+      bossWarning: this.loadAudio('/src/assets/audio/warning-boss-incoming.mp3') // Boss incoming warning
+    };
+
+    // ==================== BACKGROUND MUSIC ====================
+    this.backgroundMusic = {
+      // Normal stage music
+      stage1to10: this.loadAudio('/src/assets/audio/background-sound-1-to-10.mp3'),
+      stage11to20: this.loadAudio('/src/assets/audio/background-sound-11-to-20.mp3'),
+      stage21to30: this.loadAudio('/src/assets/audio/background-sound-21-to-30.mp3'),
+      stage31toAll: this.loadAudio('/src/assets/audio/background-sound-31-to-all.mp3'),
+      menu: this.loadAudio('/src/assets/audio/menu-background.mp3'),
+      
+      // Boss fight music (alternates based on stage)
+      boss1: this.loadAudio('/src/assets/audio/boss-fight-background-song-1.mp3'),  // Odd stages (1, 3, 5...)
+      boss2: this.loadAudio('/src/assets/audio/boss-fight-background-song-2.mp3')   // Even stages (2, 4, 6...)
     };
 
     // ==================== OTHER SOUNDS ====================
@@ -73,7 +83,7 @@ class SoundManager {
       pinHit: this.loadAudio('/src/assets/audio/pin_hit.wav')            // Pin/collision sound
     };
 
-    console.log('✅ All audio files preloaded successfully');
+    console.log('✅ All audio files preloaded successfully (30 sounds)');
   }
 
   /**
@@ -156,12 +166,68 @@ class SoundManager {
   }
 
   /**
+   * Play boss fight background music
+   * Alternates between boss1 (odd stages) and boss2 (even stages)
+   * @param {number} stage - Current game stage
+   */
+  playBossMusic(stage) {
+    if (this.isMuted) return;
+
+    // Choose boss track based on stage (odd = boss1, even = boss2)
+    const bossTrack = (stage % 2 === 1) ? this.backgroundMusic.boss1 : this.backgroundMusic.boss2;
+    
+    if (bossTrack && bossTrack !== this.currentBossTrack) {
+      // Stop normal background music
+      if (this.currentBackgroundTrack) {
+        this.currentBackgroundTrack.pause();
+        this.currentBackgroundTrack.currentTime = 0;
+      }
+
+      // Stop previous boss music
+      if (this.currentBossTrack) {
+        this.currentBossTrack.pause();
+        this.currentBossTrack.currentTime = 0;
+      }
+
+      // Play boss music
+      this.currentBossTrack = bossTrack;
+      this.currentBossTrack.volume = this.musicVolume;
+      this.currentBossTrack.loop = true;
+      this.currentBossTrack.play().catch(err => {
+        console.warn('Failed to play boss music:', err);
+      });
+
+      console.log(`🎵 Playing Boss Music Track ${stage % 2 === 1 ? '1' : '2'} (Stage ${stage})`);
+    }
+  }
+
+  /**
+   * Stop boss fight music and return to normal stage music
+   * @param {number} stage - Current game stage
+   */
+  stopBossMusic(stage) {
+    if (this.currentBossTrack) {
+      this.currentBossTrack.pause();
+      this.currentBossTrack.currentTime = 0;
+      this.currentBossTrack = null;
+    }
+    
+    // Resume normal background music
+    this.playBackgroundMusic(stage);
+  }
+
+  /**
    * Stop background music
    */
   stopBackgroundMusic() {
     if (this.currentBackgroundTrack) {
       this.currentBackgroundTrack.pause();
       this.currentBackgroundTrack.currentTime = 0;
+    }
+    if (this.currentBossTrack) {
+      this.currentBossTrack.pause();
+      this.currentBossTrack.currentTime = 0;
+      this.currentBossTrack = null;
     }
   }
 
@@ -177,6 +243,11 @@ class SoundManager {
       if (this.currentBackgroundTrack) {
         this.currentBackgroundTrack.pause();
         this.currentBackgroundTrack.currentTime = 0;
+      }
+      if (this.currentBossTrack) {
+        this.currentBossTrack.pause();
+        this.currentBossTrack.currentTime = 0;
+        this.currentBossTrack = null;
       }
 
       this.currentBackgroundTrack = track;
@@ -199,6 +270,9 @@ class SoundManager {
     if (this.currentBackgroundTrack) {
       this.currentBackgroundTrack.volume = this.musicVolume;
     }
+    if (this.currentBossTrack) {
+      this.currentBossTrack.volume = this.musicVolume;
+    }
   }
 
   /**
@@ -217,6 +291,9 @@ class SoundManager {
     if (this.currentBackgroundTrack) {
       this.currentBackgroundTrack.pause();
     }
+    if (this.currentBossTrack) {
+      this.currentBossTrack.pause();
+    }
   }
 
   /**
@@ -227,6 +304,11 @@ class SoundManager {
     if (this.currentBackgroundTrack) {
       this.currentBackgroundTrack.play().catch(err => {
         console.warn('Failed to resume music:', err);
+      });
+    }
+    if (this.currentBossTrack) {
+      this.currentBossTrack.play().catch(err => {
+        console.warn('Failed to resume boss music:', err);
       });
     }
   }
