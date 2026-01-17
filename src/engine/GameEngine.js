@@ -234,8 +234,8 @@ const BOSSES = {
     // Fight description: Extremely dangerous boss with all attack types.
     // Moves erratically. Save your best power-ups for this fight!
   },
-  
-  // Stage 5 Boss (300 seconds = 5 minutes) - FINAL BOSS
+
+  // Stage 5 Boss (300 seconds = 5 minutes)
   STAGE_5: {
     stage: 5,
     name: 'GALAXY DEVOURER',
@@ -265,12 +265,196 @@ const BOSSES = {
     // Fight description: The final boss! Teleports, shoots bullet hells,
     // has massive health. Requires all skill and power-ups to defeat.
     // Good luck, pilot!
-  }
+  },
+
+  // Stage 6 Boss
+  STAGE_6: {
+    stage: 6,
+    name: 'VOID ANNIHILATOR',
+    spawnTime: 60,
+    size: 190,
+    speed: 2.2,
+    hp: 600,
+    maxHp: 600,
+    points: 75000,
+    color: '#8000ff',
+    imageKey: 'boss-6',
+    attackPatterns: ['ultimate', 'spiral'],
+    shootRate: 700,
+    bulletSpeed: 11,
+    bulletDamage: 3,
+    movementType: 'teleport',
+    movementSpeed: 2.2,
+    targetY: 55,
+    hasSpecialAttack: true,
+    specialAttackInterval: 1800,
+  },
+
+  // Stage 7 Boss
+  STAGE_7: {
+    stage: 7,
+    name: 'COSMIC TERROR',
+    spawnTime: 60,
+    size: 200,
+    speed: 2.4,
+    hp: 700,
+    maxHp: 700,
+    points: 100000,
+    color: '#ff0040',
+    imageKey: 'boss-7',
+    attackPatterns: ['ultimate', 'spiral', 'spread'],
+    shootRate: 650,
+    bulletSpeed: 11,
+    bulletDamage: 4,
+    movementType: 'erratic',
+    movementSpeed: 2.4,
+    targetY: 50,
+    hasSpecialAttack: true,
+    specialAttackInterval: 1500,
+  },
+
+  // Stage 8 Boss
+  STAGE_8: {
+    stage: 8,
+    name: 'STELLAR DESTROYER',
+    spawnTime: 60,
+    size: 210,
+    speed: 2.6,
+    hp: 800,
+    maxHp: 800,
+    points: 150000,
+    color: '#40ff00',
+    imageKey: 'boss-8',
+    attackPatterns: ['ultimate', 'spiral', 'aimed'],
+    shootRate: 600,
+    bulletSpeed: 12,
+    bulletDamage: 4,
+    movementType: 'circular',
+    movementSpeed: 2.6,
+    targetY: 45,
+    hasSpecialAttack: true,
+    specialAttackInterval: 1200,
+  },
+
+  // Stage 9 Boss
+  STAGE_9: {
+    stage: 9,
+    name: 'GALACTIC NIGHTMARE',
+    spawnTime: 60,
+    size: 220,
+    speed: 2.8,
+    hp: 900,
+    maxHp: 900,
+    points: 200000,
+    color: '#00ffff',
+    imageKey: 'boss-9',
+    attackPatterns: ['ultimate', 'spiral', 'spread', 'aimed'],
+    shootRate: 550,
+    bulletSpeed: 12,
+    bulletDamage: 4,
+    movementType: 'teleport',
+    movementSpeed: 2.8,
+    targetY: 40,
+    hasSpecialAttack: true,
+    specialAttackInterval: 1000,
+  },
+
+  // Stage 10 Boss
+  STAGE_10: {
+    stage: 10,
+    name: 'UNIVERSAL DEVOURER',
+    spawnTime: 60,
+    size: 230,
+    speed: 3.0,
+    hp: 1000,
+    maxHp: 1000,
+    points: 250000,
+    color: '#ff8000',
+    imageKey: 'boss-10',
+    attackPatterns: ['ultimate'],
+    shootRate: 500,
+    bulletSpeed: 13,
+    bulletDamage: 5,
+    movementType: 'erratic',
+    movementSpeed: 3.0,
+    targetY: 35,
+    hasSpecialAttack: true,
+    specialAttackInterval: 800,
+  },
+
+  // Stage 11 Boss
+  STAGE_11: {
+    stage: 11,
+    name: 'DIMENSION SHREDDER',
+    spawnTime: 60,
+    size: 240,
+    speed: 3.2,
+    hp: 1200,
+    maxHp: 1200,
+    points: 350000,
+    color: '#ff00bf',
+    imageKey: 'boss-11',
+    attackPatterns: ['ultimate', 'spiral'],
+    shootRate: 450,
+    bulletSpeed: 13,
+    bulletDamage: 5,
+    movementType: 'teleport',
+    movementSpeed: 3.2,
+    targetY: 30,
+    hasSpecialAttack: true,
+    specialAttackInterval: 600,
+  },
+
+  // Stage 12 Boss
+  STAGE_12: {
+    stage: 12,
+    name: 'REALITY BREAKER',
+    spawnTime: 60,
+    size: 250,
+    speed: 3.4,
+    hp: 1400,
+    maxHp: 1400,
+    points: 500000,
+    color: '#80ff00',
+    imageKey: 'boss-12',
+    attackPatterns: ['ultimate', 'spiral', 'spread'],
+    shootRate: 400,
+    bulletSpeed: 14,
+    bulletDamage: 5,
+    movementType: 'circular',
+    movementSpeed: 3.4,
+    targetY: 25,
+    hasSpecialAttack: true,
+    specialAttackInterval: 500,
+  },
+
+  // Stage 13 Boss
+  STAGE_13: {
+    stage: 13,
+    name: 'OMEGA VOID LORD',
+    spawnTime: 60,
+    size: 260,
+    speed: 3.6,
+    hp: 1600,
+    maxHp: 1600,
+    points: 750000,
+    color: '#0040ff',
+    imageKey: 'boss-13',
+    attackPatterns: ['ultimate'],
+    shootRate: 350,
+    bulletSpeed: 15,
+    bulletDamage: 6,
+    movementType: 'teleport',
+    movementSpeed: 3.6,
+    targetY: 20,
+    hasSpecialAttack: true,
+    specialAttackInterval: 400,
+  },
 };
 
 // Helper function to get boss config by stage
 function getBossConfig(stage) {
-  const bossKey = `STAGE_${Math.min(stage, 5)}`; // Cap at stage 5
+  const bossKey = `STAGE_${Math.min(stage, 13)}`; // Cap at stage 13
   return BOSSES[bossKey] || BOSSES.STAGE_1;
 }
 
@@ -399,9 +583,89 @@ const ENEMY_TYPES = {
       speed: 2.0, // Increased from 1.0 to 2.0
       hp: 4,
       points: 250,
-      canShoot: true,
+    canShoot: true,
     shootRate: 3000, // 3 seconds base
     imageKey: 'enemy-5'
+  },
+  SHOOTING_6: {
+    color: '#FF6B00',
+    size: 60,
+    speed: 2.5,
+    hp: 3,
+    points: 280,
+    canShoot: true,
+    shootRate: 3000,
+    imageKey: 'enemy-6'
+  },
+  SHOOTING_7: {
+    color: '#FF6B00',
+    size: 60,
+    speed: 3.0,
+    hp: 3,
+    points: 300,
+    canShoot: true,
+    shootRate: 2800,
+    imageKey: 'enemy-7'
+  },
+  SHOOTING_8: {
+    color: '#FF6B00',
+    size: 65,
+    speed: 3.2,
+    hp: 4,
+    points: 320,
+    canShoot: true,
+    shootRate: 2800,
+    imageKey: 'enemy-8'
+  },
+  SHOOTING_9: {
+    color: '#FF6B00',
+    size: 65,
+    speed: 3.5,
+    hp: 4,
+    points: 350,
+    canShoot: true,
+    shootRate: 2600,
+    imageKey: 'enemy-9'
+  },
+  SHOOTING_10: {
+    color: '#FF6B00',
+    size: 70,
+    speed: 3.8,
+    hp: 5,
+    points: 380,
+    canShoot: true,
+    shootRate: 2600,
+    imageKey: 'enemy-10'
+  },
+  SHOOTING_11: {
+    color: '#FF6B00',
+    size: 70,
+    speed: 4.0,
+    hp: 5,
+    points: 400,
+    canShoot: true,
+    shootRate: 2400,
+    imageKey: 'enemy-11'
+  },
+  SHOOTING_12: {
+    color: '#FF6B00',
+    size: 75,
+    speed: 4.2,
+    hp: 6,
+    points: 450,
+    canShoot: true,
+    shootRate: 2400,
+    imageKey: 'enemy-12'
+  },
+  SHOOTING_13: {
+    color: '#FF6B00',
+    size: 75,
+    speed: 4.5,
+    hp: 6,
+    points: 500,
+    canShoot: true,
+    shootRate: 2200,
+    imageKey: 'enemy-13'
   },
   // Non-shooting enemies (steroids) - different speeds for variety
   STEROIDS_1: { // Fast and small
@@ -451,6 +715,179 @@ const ENEMY_TYPES = {
     hp: 2,
     points: 100,
     canShoot: false
+  },
+  STEROIDS_7: { // For stage 7+
+    color: '#44AAFF',
+    size: 20,
+    speed: 2.8,
+    hp: 3,
+    points: 120,
+    canShoot: false,
+    imageKey: 'enemy-7'
+  },
+  STEROIDS_8: { // For stage 8+
+    color: '#44AAFF',
+    size: 22,
+    speed: 3.0,
+    hp: 3,
+    points: 130,
+    canShoot: false,
+    imageKey: 'steroids-8'
+  },
+  STEROIDS_9: { // For stage 9+
+    color: '#44AAFF',
+    size: 24,
+    speed: 3.2,
+    hp: 4,
+    points: 140,
+    canShoot: false,
+    imageKey: 'steroids-9'
+  },
+  STEROIDS_10: { // For stage 10+
+    color: '#44AAFF',
+    size: 26,
+    speed: 3.5,
+    hp: 4,
+    points: 150,
+    canShoot: false,
+    imageKey: 'steroids-10'
+  },
+  STEROIDS_11: { // For stage 11+
+    color: '#44AAFF',
+    size: 28,
+    speed: 3.8,
+    hp: 5,
+    points: 160,
+    canShoot: false,
+    imageKey: 'steroids-11'
+  },
+  STEROIDS_12: { // For stage 12+
+    color: '#44AAFF',
+    size: 30,
+    speed: 4.0,
+    hp: 5,
+    points: 170,
+    canShoot: false,
+    imageKey: 'steroids-12'
+  },
+  STEROIDS_13: { // For stage 13+
+    color: '#44AAFF',
+    size: 32,
+    speed: 4.2,
+    hp: 6,
+    points: 180,
+    canShoot: false,
+    imageKey: 'steroids-13'
+  },
+
+  // ==================== NEW SPECIAL ENEMY TYPES ====================
+
+  // Dash enemies - move straight toward player
+  STEROIDS_DASH_1: {
+    color: '#FF4444',
+    size: 25,
+    speed: 6.0, // Very fast dash
+    hp: 2,
+    points: 200,
+    canShoot: false,
+    movementType: 'dash', // Moves straight to player
+    guaranteedPowerUp: true, // Always drops power-up
+    powerUpTypes: ['LEVEL_UP', 'SUPER_MODE', 'SUPER_MODE_2'],
+    maxPerStage: 4, // Limited to 4 per stage
+    imageKey: 'steriods-dash-1'
+  },
+  STEROIDS_DASH_2: {
+    color: '#FF4444',
+    size: 27,
+    speed: 6.5,
+    hp: 2,
+    points: 220,
+    canShoot: false,
+    movementType: 'dash',
+    guaranteedPowerUp: true,
+    powerUpTypes: ['LEVEL_UP', 'SUPER_MODE', 'SUPER_MODE_2'],
+    maxPerStage: 4,
+    imageKey: 'steriods-dash-2'
+  },
+  STEROIDS_DASH_3: {
+    color: '#FF4444',
+    size: 29,
+    speed: 7.0,
+    hp: 3,
+    points: 240,
+    canShoot: false,
+    movementType: 'dash',
+    guaranteedPowerUp: true,
+    powerUpTypes: ['LEVEL_UP', 'SUPER_MODE', 'SUPER_MODE_2'],
+    maxPerStage: 4,
+    imageKey: 'steriods-dash-3'
+  },
+  STEROIDS_DASH_4: {
+    color: '#FF4444',
+    size: 31,
+    speed: 7.5,
+    hp: 3,
+    points: 260,
+    canShoot: false,
+    movementType: 'dash',
+    guaranteedPowerUp: true,
+    powerUpTypes: ['LEVEL_UP', 'SUPER_MODE', 'SUPER_MODE_2'],
+    maxPerStage: 4,
+    imageKey: 'steriods-dash-4'
+  },
+  STEROIDS_DASH_5: {
+    color: '#FF4444',
+    size: 33,
+    speed: 8.0,
+    hp: 4,
+    points: 280,
+    canShoot: false,
+    movementType: 'dash',
+    guaranteedPowerUp: true,
+    powerUpTypes: ['LEVEL_UP', 'SUPER_MODE', 'SUPER_MODE_2'],
+    maxPerStage: 4,
+    imageKey: 'steriods-dash-5'
+  },
+
+  // Explode enemies - dash to middle, blast 3 bullets, exit
+  ENEMY_EXPLODE_1: {
+    color: '#FF8800',
+    size: 55,
+    speed: 8.0, // Very fast dash
+    hp: 3,
+    points: 300,
+    canShoot: true,
+    shootRate: 100, // Shoots immediately upon reaching middle
+    bulletCount: 3, // Fires 3 bullets at once
+    movementType: 'dash-exit', // Dash to middle, shoot, then exit
+    highPowerUpChance: true, // Higher chance for power-ups
+    imageKey: 'enemy-explode-1'
+  },
+  ENEMY_EXPLODE_2: {
+    color: '#FF8800',
+    size: 58,
+    speed: 8.5,
+    hp: 4,
+    points: 350,
+    canShoot: true,
+    shootRate: 100,
+    bulletCount: 3,
+    movementType: 'dash-exit',
+    highPowerUpChance: true,
+    imageKey: 'enemy-explode-2'
+  },
+  ENEMY_EXPLODE_3: {
+    color: '#FF8800',
+    size: 60,
+    speed: 9.0,
+    hp: 5,
+    points: 400,
+    canShoot: true,
+    shootRate: 100,
+    bulletCount: 3,
+    movementType: 'dash-exit',
+    highPowerUpChance: true,
+    imageKey: 'enemy-explode-3'
   }
 };
 
@@ -732,6 +1169,25 @@ class GameEngine {
     
     // ==================== SOUND SYSTEM ====================
     this.soundManager = new SoundManager(); // Lazy loading audio system
+    
+    // ==================== VISIBILITY HANDLING ====================
+    // Pause/resume audio when window is hidden/minimized
+    this.handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Window is hidden/minimized - pause all audio
+        this.soundManager.pauseAll();
+        console.log('🛑 Window hidden - audio paused');
+      } else {
+        // Window is visible again - resume audio
+        if (this.isRunning && !this.isPaused) {
+          this.soundManager.resumeAll();
+          console.log('▶️ Window visible - audio resumed');
+        }
+      }
+    };
+    
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
     
     this.bossActive = false;
     
@@ -1021,18 +1477,27 @@ class GameEngine {
   
   pause() {
     this.isPaused = true;
+    // Pause all audio when game is paused
+    this.soundManager?.pauseAll();
     this.callbacks.onGamePause?.();
   }
   
   resume() {
     this.isPaused = false;
     this.lastTime = performance.now();
+    // Resume all audio when game is resumed
+    this.soundManager?.resumeAll();
     this.callbacks.onGameResume?.();
   }
   
   stop() {
     this.isRunning = false;
+    // Remove visibility change listener to prevent memory leaks
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.callbacks.onGameOver?.(this.player.score);
+    // Stop all audio
+    this.soundManager?.pauseAll();
+    this.soundManager?.stopBackgroundMusic();
   }
   
   // Screen Wipe Animation System
@@ -1635,6 +2100,67 @@ class GameEngine {
         if (enemy.canShoot && enemy.lastShot !== null) {
           this.enemyShoot(enemy);
         }
+      } else if (enemy.isDashEnemy) {
+        // Dash enemy: moves straight toward player
+        const dx = this.player.x - enemy.x;
+        const dy = this.player.y - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+          // Move toward player
+          enemy.x += (dx / distance) * enemy.speed;
+          enemy.y += (dy / distance) * enemy.speed;
+        }
+        
+        // Gentle wobble
+        enemy.x += Math.sin(enemy.time * 0.005 + enemy.wobblePhase) * 0.3;
+      } else if (enemy.isExplodeEnemy) {
+        // Explode enemy: dash to middle, blast 3 bullets, exit
+        if (!enemy.hasReachedMiddle) {
+          // Phase 1: Dash to middle of screen
+          const targetX = this.canvas.width / 2;
+          const targetY = this.canvas.height / 3; // Upper third
+          const dx = targetX - enemy.x;
+          const dy = targetY - enemy.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance > 10) {
+            enemy.x += (dx / distance) * enemy.speed;
+            enemy.y += (dy / distance) * enemy.speed;
+          } else {
+            // Reached middle
+            enemy.hasReachedMiddle = true;
+            enemy.reachedMiddleTime = Date.now();
+          }
+        } else if (enemy.hasReachedMiddle && !enemy.hasFiredBurst) {
+          // Phase 2: Fire 3 bullets immediately upon reaching middle
+          for (let i = -1; i <= 1; i++) {
+            this.soundManager?.play('enemy.fire');
+            
+            const bullet = this.bulletPool.get();
+            if (bullet) {
+              bullet.x = enemy.x;
+              bullet.y = enemy.y + enemy.size / 2;
+              
+              // Calculate angle to player with spread
+              const dx = this.player.x - enemy.x;
+              const dy = this.player.y - enemy.y;
+              const baseAngle = Math.atan2(dy, dx);
+              const spreadAngle = baseAngle + (i * 0.3); // Wider spread
+              
+              const speed = enemy.bulletSpeed || 10; // Faster bullets for explode enemies
+              bullet.vx = Math.cos(spreadAngle) * speed;
+              bullet.vy = Math.sin(spreadAngle) * speed;
+              bullet.isEnemyBullet = true;
+              bullet.damage = enemy.bulletDamage || 1;
+            }
+          }
+          enemy.hasFiredBurst = true;
+        } else if (enemy.hasFiredBurst) {
+          // Phase 3: Quick exit upward
+          enemy.y -= enemy.speed * 1.5; // Exit faster than it entered
+          enemy.x += Math.sin(enemy.time * 0.01) * 1; // Wider wobble on exit
+        }
       } else {
         // Regular enemy movement
         if (enemy.vx !== undefined && enemy.vy !== undefined) {
@@ -2034,9 +2560,37 @@ class GameEngine {
       // Enemy destroyed
       this.player.score += enemy.points;
       
-      // 25% chance to spawn power-up
-      if (Math.random() < 0.25 && !enemy.isBoss) {
-        this.spawnPowerUp(enemy.x, enemy.y);
+      // Power-up spawn logic
+      if (!enemy.isBoss) {
+        let shouldSpawnPowerUp = false;
+        let powerUpType = null;
+        
+        if (enemy.isDashEnemy && enemy.guaranteedPowerUp) {
+          // Dash enemies ALWAYS drop guaranteed power-ups
+          shouldSpawnPowerUp = true;
+          // Pick from guaranteed power-up types
+          const types = enemy.powerUpTypes || ['LEVEL_UP', 'SUPER_MODE', 'SUPER_MODE_2'];
+          powerUpType = types[Math.floor(Math.random() * types.length)];
+        } else if (enemy.isExplodeEnemy && enemy.highPowerUpChance) {
+          // Explode enemies have higher chance (50%)
+          shouldSpawnPowerUp = Math.random() < 0.5;
+        } else {
+          // Regular enemies: 25% chance
+          shouldSpawnPowerUp = Math.random() < 0.25;
+        }
+        
+        if (shouldSpawnPowerUp) {
+          if (powerUpType) {
+            // Spawn specific power-up type
+            const powerUp = new PowerUp(enemy.x, enemy.y, powerUpType);
+            powerUp.game = this;
+            this.powerUps.push(powerUp);
+            this.soundManager?.play('powerup.spawn');
+          } else {
+            // Spawn random power-up
+            this.spawnPowerUp(enemy.x, enemy.y);
+          }
+        }
       }
       
       // ==================== ENEMY DESTRUCTION SOUNDS ====================
@@ -2292,19 +2846,56 @@ class GameEngine {
   }
   
   spawnEnemy() {
+    // Track dash enemies per stage (max 4)
+    if (!this.dashEnemiesSpawnedThisStage) {
+      this.dashEnemiesSpawnedThisStage = 0;
+    }
+    // Calculate enemy tier based on current stage (1-13)
+    const enemyTier = Math.min(this.currentLevel, 13);
+    
+    // Small chance to spawn special dash enemies (3% chance, max 4 per stage)
+    if (this.dashEnemiesSpawnedThisStage < 4 && Math.random() < 0.03 && enemyTier >= 1) {
+      const dashTier = Math.min(enemyTier, 5); // Dash enemies have 5 variants
+      const dashTypeKey = `STEROIDS_DASH_${dashTier}`;
+      
+      if (ENEMY_TYPES[dashTypeKey]) {
+        this.spawnDashEnemy(dashTypeKey);
+        this.dashEnemiesSpawnedThisStage++;
+        return;
+      }
+    }
+    
+    // Small chance to spawn explode enemies (2% chance, stages 3+)
+    if (Math.random() < 0.02 && enemyTier >= 3) {
+      const explodeTier = Math.min(Math.floor((enemyTier - 2) / 3) + 1, 3); // Maps stages to explode 1-3
+      const explodeTypeKey = `ENEMY_EXPLODE_${explodeTier}`;
+      
+      if (ENEMY_TYPES[explodeTypeKey]) {
+        this.spawnExplodeEnemy(explodeTypeKey);
+        return;
+      }
+    }
+    
     // Weighted spawn: 70% non-shooting (steroids), 30% shooting
     let typeKey;
     
     if (Math.random() < 0.7) {
-      // Spawn non-shooting enemy (steroids)
-      const steroidsTypes = ['STEROIDS_1', 'STEROIDS_2', 'STEROIDS_3', 'STEROIDS_4', 'STEROIDS_5', 'STEROIDS_6'];
-      typeKey = steroidsTypes[Math.floor(Math.random() * steroidsTypes.length)];
+      // Spawn non-shooting enemy (steroids) - RANDOM variety!
+      // Always use the original 6 types for variety in size, HP, speed
+      const randomSteroids = ['STEROIDS_1', 'STEROIDS_2', 'STEROIDS_3', 'STEROIDS_4', 'STEROIDS_5', 'STEROIDS_6'];
+      typeKey = randomSteroids[Math.floor(Math.random() * randomSteroids.length)];
     } else {
-      // Spawn shooting enemy
-      const shootingTypes = ['SHOOTING_1', 'SHOOTING_2', 'SHOOTING_3', 'SHOOTING_4', 'SHOOTING_5'];
-      typeKey = shootingTypes[Math.floor(Math.random() * shootingTypes.length)];
+      // Spawn shooting enemy - DEDICATED TO STAGE
+      // Stage 1 = SHOOTING_1 (enemy-1), Stage 2 = SHOOTING_2 (enemy-2), etc.
+      const shootingType = `SHOOTING_${enemyTier}`;
+      
+      if (ENEMY_TYPES[shootingType]) {
+        typeKey = shootingType;
+      } else {
+        // Fallback to SHOOTING_1 if tier not available
+        typeKey = 'SHOOTING_1';
+      }
     }
-    
     const type = ENEMY_TYPES[typeKey];
     
     // Debug logging to verify shooting enemies spawn
@@ -2312,8 +2903,6 @@ class GameEngine {
       console.log('Spawning shooting enemy:', typeKey);
     }
     
-    // Calculate boss stage to determine enemy image tier
-    const enemyTier = Math.min(this.currentLevel, 5);
     
     // Multi-directional entry for shooting enemies (top half of screen)
     let spawnX = Math.random() * (this.canvas.width - 100) + 50;
@@ -2367,7 +2956,7 @@ class GameEngine {
       ...type,
       time: 0,
       wobblePhase: Math.random() * Math.PI * 2,
-      lastShot: type.canShoot ? Date.now() + (200 + Math.random() * 1000) : null // 0.2-1.2s initial fire delay
+      lastShot: type.canShoot ? Date.now() - 1000 : null // Fire immediately (set lastShot to 1 second ago)
     };
     
     // Store initial velocity for multi-directional enemies
@@ -2375,6 +2964,9 @@ class GameEngine {
       enemy.vx = velocityX;
       enemy.vy = velocityY;
       enemy.entryPattern = entryPattern; // Track entry pattern for guaranteed shots
+      // 🔥 FIRE IMMEDIATELY upon entering screen
+      this.enemyShoot(enemy);
+      console.log(`Shooting enemy firing immediately on entry: ${typeKey}`);
     }
     
     // Scale HP with level
@@ -2407,22 +2999,112 @@ class GameEngine {
     
     // Load enemy image based on type prefix
     if (typeKey.startsWith('SHOOTING')) {
-      // Shooting enemies: map to enemy-1 through enemy-5
+      // Shooting enemies: DEDICATED TO STAGE (Stage 1 = enemy-1, Stage 2 = enemy-2, etc.)
       const imageNum = enemyTier;
       enemy.image = this.assetLoader.getImage(`enemy-${imageNum}`);
       if (!enemy.image || !enemy.image.complete) {
         console.warn(`Shooting enemy image not loaded: enemy-${imageNum}`);
       }
-    } else if (typeKey.startsWith('STEROIDS')) {
-      // Non-shooting enemies: map to steroids-1 through steroids-6
-      const imageNum = Math.min(enemyTier, 6);
-      enemy.image = this.assetLoader.getImage(`steroids-${imageNum}`);
+    } else if (typeKey.startsWith('STEROIDS') && !typeKey.startsWith('STEROIDS_DASH')) {
+      // Non-shooting enemies (steroids): RANDOM variety from original 6 types
+      // Extract the number from typeKey (e.g., STEROIDS_3 -> 3)
+      const steroidNum = parseInt(typeKey.split('_')[1]);
+      enemy.image = this.assetLoader.getImage(`steroids-${steroidNum}`);
       if (!enemy.image || !enemy.image.complete) {
-        console.warn(`Steroid enemy image not loaded: steroids-${imageNum}`);
+        console.warn(`Steroid enemy image not loaded: steroids-${steroidNum}`);
+      }
+    } else if (typeKey.startsWith('STEROIDS_DASH')) {
+      // Dash enemies use their own image keys
+      const dashNum = parseInt(typeKey.split('_')[2]); // STEROIDS_DASH_3 -> 3
+      enemy.image = this.assetLoader.getImage(`steriods-dash-${dashNum}`);
+      if (!enemy.image || !enemy.image.complete) {
+        console.warn(`Dash enemy image not loaded: steriods-dash-${dashNum}`);
+      }
+    } else if (typeKey.startsWith('ENEMY_EXPLODE')) {
+      // Explode enemies use their own image keys
+      const explodeNum = parseInt(typeKey.split('_')[2]); // ENEMY_EXPLODE_2 -> 2
+      enemy.image = this.assetLoader.getImage(`enemy-explode-${explodeNum}`);
+      if (!enemy.image || !enemy.image.complete) {
+        console.warn(`Explode enemy image not loaded: enemy-explode-${explodeNum}`);
       }
     }
     
     this.enemies.push(enemy);
+  }
+  
+  spawnDashEnemy(typeKey) {
+    const type = ENEMY_TYPES[typeKey];
+    const enemyTier = Math.min(this.currentLevel, 13);
+    
+    // Spawn from random side
+    const spawnSide = Math.random() < 0.5 ? 'left' : 'right';
+    let spawnX = spawnSide === 'left' ? -50 : this.canvas.width + 50;
+    let spawnY = Math.random() * (this.canvas.height / 2); // Top half only
+    
+    const enemy = {
+      x: spawnX,
+      y: spawnY,
+      type: typeKey,
+      isEnemy: true,
+      isDashEnemy: true, // Flag for special movement
+      ...type,
+      time: 0,
+      wobblePhase: Math.random() * Math.PI * 2,
+      spawnSide: spawnSide
+    };
+    
+    // Scale HP with level
+    enemy.hp = type.hp + Math.floor(this.currentLevel / 3);
+    enemy.maxHp = enemy.hp;
+    
+    // Load dash enemy image
+    if (type.imageKey) {
+      enemy.image = this.assetLoader.getImage(type.imageKey);
+      if (!enemy.image || !enemy.image.complete) {
+        console.warn(`Dash enemy image not loaded: ${type.imageKey}`);
+      }
+    }
+    
+    this.enemies.push(enemy);
+    console.log(`Spawned dash enemy: ${typeKey} from ${spawnSide}`);
+  }
+  
+  spawnExplodeEnemy(typeKey) {
+    const type = ENEMY_TYPES[typeKey];
+    const enemyTier = Math.min(this.currentLevel, 13);
+    
+    // Spawn from top
+    let spawnX = Math.random() * (this.canvas.width - 100) + 50;
+    let spawnY = -50;
+    
+    const enemy = {
+      x: spawnX,
+      y: spawnY,
+      type: typeKey,
+      isEnemy: true,
+      isExplodeEnemy: true, // Flag for special behavior
+      ...type,
+      time: 0,
+      wobblePhase: Math.random() * Math.PI * 2,
+      hasReachedMiddle: false,
+      hasFiredBurst: false,
+      isExiting: false
+    };
+    
+    // Scale HP with level
+    enemy.hp = type.hp + Math.floor(this.currentLevel / 3);
+    enemy.maxHp = enemy.hp;
+    
+    // Load explode enemy image
+    if (type.imageKey) {
+      enemy.image = this.assetLoader.getImage(type.imageKey);
+      if (!enemy.image || !enemy.image.complete) {
+        console.warn(`Explode enemy image not loaded: ${type.imageKey}`);
+      }
+    }
+    
+    this.enemies.push(enemy);
+    console.log(`Spawned explode enemy: ${typeKey}`);
   }
   
   // ==================== POWER-UP SYSTEM ====================
@@ -3015,6 +3697,9 @@ class GameEngine {
     // Reset spawn volume increase for new stage (optional difficulty scaling)
     this.spawnVolumeIncrease = Math.min(this.spawnVolumeIncrease + 10, 100); // Increase by 10%
     this.lastVolumeIncreaseTime = Date.now();
+    
+    // Reset dash enemy counter for new stage
+    this.dashEnemiesSpawnedThisStage = 0;
     
     // 🎵 PLAY STAGE MUSIC ON LEVEL TRANSITION
     // Start background music for the new stage
