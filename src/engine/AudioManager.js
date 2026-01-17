@@ -19,40 +19,52 @@ class AudioManager {
     // Audio file mappings
     this.audioFiles = {
       // Background music
-      'menu-music': '/assets/audio/menu-background.mp3',
-      'bgm-1-10': '/assets/audio/background-sound-1-to-10.mp3',
-      'bgm-11-20': '/assets/audio/background-sound-11-to-20.mp3',
-      'bgm-21-30': '/assets/audio/background-sound-21-to-30.mp3',
-      'bgm-31-all': '/assets/audio/background-sound-31-to-all.mp3',
+      'menu-music': '/audio/menu-background.mp3',
+      'bgm-1-10': '/audio/background-sound-1-to-10.mp3',
+      'bgm-11-20': '/audio/background-sound-11-to-20.mp3',
+      'bgm-21-30': '/audio/background-sound-21-to-30.mp3',
+      'bgm-31-all': '/audio/background-sound-31-to-all.mp3',
+      'boss-fight-music': '/audio/boss-fight-background-song.mp3',
+      'boss-fight-music-1': '/audio/boss-fight-background-song-1.mp3',
+      'boss-fight-music-2': '/audio/boss-fight-background-song-2.mp3',
       
       // Player sounds
-      'player-shoot': '/assets/audio/fire.wav',
-      'player-explode': '/assets/audio/player-explode.wav',
-      'power-up': '/assets/audio/power-ups-gain.wav',
-      'power-up-beam': '/assets/audio/power-up-beam.mp3',
-      'super-power-up': '/assets/audio/super-power-upda-gained.wav',
+      'player-shoot': '/audio/fire.wav',
+      'player-shoot-normal': '/audio/fire-normal.wav',
+      'player-explode': '/audio/player-explode.wav',
+      'power-up': '/audio/power-ups.wav',
+      'power-up-1': '/audio/power-ups-1.wav',
+      'power-up-gain': '/audio/power-ups-gain.wav',
+      'power-up-beam': '/audio/power-up-beam.mp3',
+      'super-power-up': '/audio/super-power-upda-gained.wav',
       
       // Enemy sounds
-      'enemy-destroyed': '/assets/audio/none-shooting-enemy-destroyed.wav',
-      'shooting-enemy-destroyed': '/assets/audio/shooting-enemy-destroyed.mp3',
-      'enemy-fire': '/assets/audio/shooting-enemy-fire.wav',
-      'enemy-hit': '/assets/audio/shooting-enemy-hit.wav',
-      'boss-fire': '/assets/audio/boss-fire.wav',
-      'boss-explode': '/assets/audio/boss-explode.wav',
+      'enemy-destroyed': '/audio/none-shooting-enemy-destroyed.wav',
+      'enemy-hit': '/audio/enemy-hit.wav',
+      'shooting-enemy-destroyed': '/audio/shooting-enemy-destroyed.mp3',
+      'shooting-enemy-fire': '/audio/shooting-enemy-fire.wav',
+      'shooting-enemy-hit': '/audio/shooting-enemy-hit.wav',
+      'boss-fire': '/audio/boss-fire.wav',
+      'boss-explode': '/audio/boss-explode.wav',
+      'boss-dead': '/audio/boss dead.wav',
       
       // Game events
-      'game-over': '/assets/audio/game-over.wav',
-      'game-over-notif': '/assets/audio/game-over-notif.wav',
-      'new-record': '/assets/audio/new_record.wav',
-      'win-fireworks': '/assets/audio/win_fireworks.wav',
-      'jackpot': '/assets/audio/jackpot.wav',
-      'stage-clear': '/assets/audio/win_fireworks.wav',
+      'game-over': '/audio/game-over.wav',
+      'game-over-notif': '/audio/game-over-notif.wav',
+      'new-record': '/audio/new_record.wav',
+      'win-fireworks': '/audio/win_fireworks.wav',
+      'fireworks': '/audio/fireworks.wav',
+      'jackpot': '/audio/jackpot.wav',
+      'stage-clear': '/audio/win_fireworks.wav',
+      'stage-start': '/audio/stage-start.mp3',
+      'boss-warning': '/audio/warning-boss-incoming.mp3',
       
       // UI sounds
-      'ui-click': '/assets/audio/ui_click.wav',
-      'pin-hit': '/assets/audio/pin_hit.wav',
-      'metal-hit': '/assets/audio/metal-hit.wav',
-      'break-bones': '/assets/audio/break-bones.wav'
+      'ui-click': '/audio/ui_click.wav',
+      'pin-hit': '/audio/pin_hit.wav',
+      'metal-hit': '/audio/metal-hit.wav',
+      'break-bones': '/audio/break-bones.wav',
+      'slot-hit': '/audio/slot_hit.wav'
     };
   }
   

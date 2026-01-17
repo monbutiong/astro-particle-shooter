@@ -43,10 +43,10 @@
  *   ✅ COIN_100/1000/10000:     soundManager.play('powerup.jackpot')
  * 
  * UI & GAME STATE SOUNDS:
- *   ✅ Stage notification:       soundManager.play('ui.newRecord')
- *   ✅ Stage clear:             soundManager.play('ui.winFireworks')
- *   ✅ Game over notification:  soundManager.play('ui.gameOverNotif')
- *   ✅ Game over music:         soundManager.play('ui.gameOver')
+ *   ? Stage notification:       soundManager.play('ui.stageStart')
+ *   ? Stage clear:             soundManager.play('ui.winFireworks')
+ *   ? Game over music:         soundManager.play('ui.gameOver')
+ *   ? Game over music:         soundManager.play('ui.gameOver')
  *   ✅ New high score:          soundManager.play('ui.newRecord')
  *   ✅ Button click:            soundManager.play('ui.click')
  * 
@@ -114,8 +114,8 @@ const BOSSES = {
     stage: 1,
     name: 'Mega Destroyer',
     spawnTime: 60, // seconds before appearing
-    size: 160, // Boss size in pixels (larger = bigger)
-    speed: 2.0, // Movement speed
+    size: 130, // Boss size in pixels (larger = bigger)
+    speed: 1.0, // Movement speed
     hp: 100, // Health points
     maxHp: 100, // Maximum health
     points: 1000, // Score awarded when defeated
@@ -130,7 +130,7 @@ const BOSSES = {
     
     // Movement: Enters from top, then moves side-to-side
     movementType: 'side-to-side',
-    movementSpeed: 2.0,
+    movementSpeed: 1.0,
     targetY: 150, // Y position where boss stops descending
     
     // Special abilities
@@ -147,8 +147,8 @@ const BOSSES = {
     stage: 2,
     name: 'Doom Bringer',
     spawnTime: 60, // seconds (resets after each boss defeat)
-    size: 180, // Larger than stage 1
-    speed: 2.5, // Faster movement
+    size: 140, // Larger than stage 1
+    speed: 1.5, // Faster movement
     hp: 150, // More health
     maxHp: 150,
     points: 2500, // More points
@@ -162,7 +162,7 @@ const BOSSES = {
     bulletDamage: 1,
     
     movementType: 'side-to-side',
-    movementSpeed: 2.5,
+    movementSpeed: 1.5,
     targetY: 120,
     
     // Special: Occasial burst fire
@@ -178,8 +178,8 @@ const BOSSES = {
     stage: 3,
     name: 'Death Star',
     spawnTime: 60,
-    size: 200,
-    speed: 3.0,
+    size: 150,
+    speed: 2.0,
     hp: 200,
     maxHp: 200,
     points: 5000,
@@ -193,7 +193,7 @@ const BOSSES = {
     bulletDamage: 2, // More damage
     
     movementType: 'circular', // Circular movement pattern
-    movementSpeed: 3.0,
+    movementSpeed: 2.0,
     targetY: 100,
     
     // Special: Spiral bullet hell
@@ -209,8 +209,8 @@ const BOSSES = {
     stage: 4,
     name: 'Omega Destroyer',
     spawnTime: 60,
-    size: 220,
-    speed: 3.5,
+    size: 160,
+    speed: 2.0,
     hp: 300,
     maxHp: 300,
     points: 10000,
@@ -224,7 +224,7 @@ const BOSSES = {
     bulletDamage: 2,
     
     movementType: 'erratic', // Unpredictable movement
-    movementSpeed: 3.5,
+    movementSpeed: 2.0,
     targetY: 80,
     
     // Multiple special attacks
@@ -240,8 +240,8 @@ const BOSSES = {
     stage: 5,
     name: 'GALAXY DEVOURER',
     spawnTime: 60,
-    size: 250, // Massive
-    speed: 4.0,
+    size: 180, // Massive
+    speed: 2.0,
     hp: 500, // Boss with 500 HP
     maxHp: 500,
     points: 50000, // Huge score
@@ -255,7 +255,7 @@ const BOSSES = {
     bulletDamage: 3, // High damage
     
     movementType: 'teleport', // Teleports around
-    movementSpeed: 4.0,
+    movementSpeed: 2.0,
     targetY: 60,
     
     // Constant special attacks
@@ -731,8 +731,7 @@ class GameEngine {
     this.assetLoader = new AssetLoader();
     
     // ==================== SOUND SYSTEM ====================
-    // ⚠️ DON'T create SoundManager yet - it will be created after user interaction
-    this.soundManager = null; // Will be initialized in unlockAudio()
+    this.soundManager = new SoundManager(); // Lazy loading audio system
     
     this.bossActive = false;
     
@@ -847,41 +846,6 @@ class GameEngine {
     this.canvas.addEventListener('touchend', () => {
       this.touch.active = false;
     });
-  }
-  
-  /**
-   * 🔓 Initialize audio system AFTER user interaction
-   * This fixes Android WebView autoplay policy
-   */
-  initAudioSystem() {
-    if (this.soundManager) {
-      console.log('✅ SoundManager already initialized');
-      console.log('🔊 Current soundManager state:', {
-        isMuted: this.soundManager.isMuted,
-        audioContextUnlocked: this.soundManager.audioContextUnlocked
-      });
-      return;
-    }
-    
-    console.log('🔊 Initializing SoundManager after user interaction...');
-    this.soundManager = new SoundManager();
-    console.log('✅ SoundManager created successfully!');
-    
-    // Also unlock audio immediately
-    if (this.soundManager && this.soundManager.unlockAudio) {
-      console.log('🔓 Calling unlockAudio()...');
-      this.soundManager.unlockAudio().then(() => {
-        console.log('✅ unlockAudio() completed');
-        console.log('🔊 Audio system ready:', {
-          isMuted: this.soundManager.isMuted,
-          audioContextUnlocked: this.soundManager.audioContextUnlocked,
-          hasSounds: Object.keys(this.soundManager.sounds).length > 0,
-          hasMusic: this.soundManager.backgroundMusic !== null
-        });
-      }).catch(err => {
-        console.error('❌ unlockAudio() failed:', err);
-      });
-    }
   }
   
   loadPlayerShip(characterType) {
@@ -1048,16 +1012,8 @@ class GameEngine {
     this.isPaused = false;
     this.lastTime = performance.now();
     
-    console.log('🎮 Game starting...');
-    console.log('🔊 SoundManager exists:', !!this.soundManager);
-    console.log('🔊 SoundManager state:', this.soundManager ? {
-      isMuted: this.soundManager.isMuted,
-      audioContextUnlocked: this.soundManager.audioContextUnlocked
-    } : 'NO SOUNDMANAGER');
-    
     // ==================== START BACKGROUND MUSIC ====================
     this.soundManager?.playBackgroundMusic(this.currentLevel);
-    console.log('🎵 playBackgroundMusic called for stage:', this.currentLevel);
     
     this.gameLoop(this.lastTime);
     this.callbacks.onGameStart?.();
@@ -1178,7 +1134,10 @@ class GameEngine {
           this.entranceTimer = now;
           
           // ==================== STAGE NOTIFICATION SOUND ====================
-          this.soundManager?.play('ui.newRecord'); // Stage notification sound
+          // Ensure audio is unlocked before playing
+          this.soundManager?.unlockAudio();
+          
+          this.soundManager?.play('ui.stageStart'); // Stage notification sound
           
           this.stageMessage = `STAGE ${this.currentLevel}`;
           this.stageMessageOpacity = 1;
@@ -2046,6 +2005,9 @@ class GameEngine {
       this.soundManager?.play('player.explode'); // Player explosion
       this.soundManager?.play('ui.gameOverNotif'); // Game over notification
       
+      // 🛑 STOP BACKGROUND MUSIC on game over
+      this.soundManager?.stopBackgroundMusic();
+      
       // Hide player ship immediately
       this.player.isDead = true;
       
@@ -2351,7 +2313,7 @@ class GameEngine {
     }
     
     // Calculate boss stage to determine enemy image tier
-    const bossStage = Math.floor(this.currentLevel / 2) + 1;
+    const enemyTier = Math.min(this.currentLevel, 5);
     
     // Multi-directional entry for shooting enemies (top half of screen)
     let spawnX = Math.random() * (this.canvas.width - 100) + 50;
@@ -2446,14 +2408,14 @@ class GameEngine {
     // Load enemy image based on type prefix
     if (typeKey.startsWith('SHOOTING')) {
       // Shooting enemies: map to enemy-1 through enemy-5
-      const imageNum = Math.min(Math.ceil((bossStage) / 2), 5);
+      const imageNum = enemyTier;
       enemy.image = this.assetLoader.getImage(`enemy-${imageNum}`);
       if (!enemy.image || !enemy.image.complete) {
         console.warn(`Shooting enemy image not loaded: enemy-${imageNum}`);
       }
     } else if (typeKey.startsWith('STEROIDS')) {
       // Non-shooting enemies: map to steroids-1 through steroids-6
-      const imageNum = Math.min(Math.ceil((bossStage) / 2), 6);
+      const imageNum = Math.min(enemyTier, 6);
       enemy.image = this.assetLoader.getImage(`steroids-${imageNum}`);
       if (!enemy.image || !enemy.image.complete) {
         console.warn(`Steroid enemy image not loaded: steroids-${imageNum}`);
@@ -2820,7 +2782,7 @@ class GameEngine {
   
   // Helper function to get boss configuration for current level
   getBossConfig() {
-    const bossStage = Math.min(Math.floor(this.currentLevel / 2) + 1, 5);
+    const bossStage = Math.min(this.currentLevel, 5);
     const bossKey = `STAGE_${bossStage}`;
     return BOSSES[bossKey] || BOSSES.STAGE_1;
   }
@@ -2879,7 +2841,7 @@ class GameEngine {
   
   // Helper function to get boss configuration for current level
   getBossConfig() {
-    const bossStage = Math.min(Math.floor(this.currentLevel / 2) + 1, 5);
+    const bossStage = Math.min(this.currentLevel, 5);
     const bossKey = `STAGE_${bossStage}`;
     return BOSSES[bossKey] || BOSSES.STAGE_1;
   }
@@ -3054,6 +3016,10 @@ class GameEngine {
     this.spawnVolumeIncrease = Math.min(this.spawnVolumeIncrease + 10, 100); // Increase by 10%
     this.lastVolumeIncreaseTime = Date.now();
     
+    // 🎵 PLAY STAGE MUSIC ON LEVEL TRANSITION
+    // Start background music for the new stage
+    this.soundManager?.playBackgroundMusic(this.currentLevel);
+    console.log(`🎵 Starting background music for Stage ${this.currentLevel}`);
     console.log(`Stage transition: STAGE ${this.currentLevel}`);
     
     // Notify React component of stage change
@@ -3377,7 +3343,6 @@ class GameEngine {
 
 export default GameEngine;
 export { GAME_CONFIG, ENEMY_TYPES };
-
 
 
 

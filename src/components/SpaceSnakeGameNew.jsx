@@ -242,14 +242,6 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     gameEngineRef.current = engine;
     
     // 🔊 INITIALIZE AUDIO SYSTEM AFTER USER INTERACTION
-    // This is CRITICAL for Android WebView - audio must be created AFTER user clicks START
-    console.log('🔊 Initializing audio system after START button click...');
-    engine.initAudioSystem();
-    console.log('✅ Audio system initialized!');
-    
-    // Small delay to ensure audio is ready
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
     // Preload all game assets
     await engine.preloadAssets();
     
@@ -551,13 +543,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                 
                 {/* Character Avatar - Enlarged to 220px */}
                 <div style={{
-                  width: '180px',
-                  height: '180px',
-                  margin: '0 auto 15px auto',
+                  width: '180px', height: '180px', margin: '0 auto 15px auto',
                   borderRadius: '20px',
                   overflow: 'hidden',
-                  border: '5px solid',
-                  borderColor: characterColors[characterType] || '#4488ff',
                   position: 'relative',
                   background: 'rgba(0, 0, 0, 0.4)',
                   boxShadow: `0 0 40px ${(characterColors[characterType] || '#4488ff')}80, inset 0 0 30px rgba(0, 0, 0, 0.5)`
@@ -582,49 +570,6 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   }}></div>
                 </div>
                 
-                {/* Character Name - Larger */}
-                <h3 style={{
-                  fontSize: '32px',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  margin: '0 0 8px 0',
-                  color: characterColors[characterType] || '#4488ff',
-                  textTransform: 'capitalize',
-                  textShadow: `0 0 15px ${characterColors[characterType] || '#4488ff'}`
-                }}>
-                  {characterType}
-                </h3>
-                
-                {/* Change Character Button */}
-                <button onClick={() => onMenuReturn && onMenuReturn()}
-                style={{
-                  padding: '14px 24px',
-                  fontSize: '15px',
-                  fontWeight: 'bold',
-                  background: 'linear-gradient(135deg, #ff44ff, #ff8800, #ffcc00)',
-                  border: 'none',
-                  borderRadius: '15px',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  boxShadow: '0 10px 30px rgba(255, 68, 255, 0.6)',
-                  width: '100%',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-3px) scale(1.05)';
-                  e.target.style.boxShadow = '0 12px 35px rgba(255, 68, 255, 0.7)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0) scale(1)';
-                  e.target.style.boxShadow = '0 8px 25px rgba(255, 68, 255, 0.5)';
-                }}
-              >
-                Change Character
-              </button>
             </div>
             
               
