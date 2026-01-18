@@ -492,6 +492,36 @@ class SoundManager {
     }
     return !this.isMuted;
   }
+
+  /**
+   * Pause all audio (background music and boss music)
+   */
+  pauseAll() {
+    if (this.currentBackgroundTrack) {
+      this.currentBackgroundTrack.pause();
+    }
+    if (this.currentBossTrack) {
+      this.currentBossTrack.pause();
+    }
+  }
+
+  /**
+   * Resume all audio (background music and boss music)
+   */
+  resumeAll() {
+    if (!this.isMuted) {
+      if (this.currentBackgroundTrack) {
+        this.currentBackgroundTrack.play().catch(err => {
+          // Silent fail
+        });
+      }
+      if (this.currentBossTrack) {
+        this.currentBossTrack.play().catch(err => {
+          // Silent fail
+        });
+      }
+    }
+  }
 }
 
 export default SoundManager;

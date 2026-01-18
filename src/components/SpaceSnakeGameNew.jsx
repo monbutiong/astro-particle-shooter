@@ -5,6 +5,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import GameEngine from '../engine/GameEngine';
+import { storage } from '../utils/storage';
 
 const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' }) => {
   // ==================== REFS ====================
@@ -18,12 +19,13 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
   const [level, setLevel] = useState(1);
   const [finalScore, setFinalScore] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [bossWarning, setBossWarning] = useState(false);
+  const [bossWarning, setBossWarning] = useState(null);
   const [bossTimer, setBossTimer] = useState(60);
   const [avatarState, setAvatarState] = useState('normal');
   const [stageCompleted, setStageCompleted] = useState(null);
   const [highScore, setHighScore] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [credits, setCredits] = useState(3);
   
   // Character colors
   const characterColors = {
@@ -90,11 +92,29 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     return 'none';
   };
   
+  // ==================== LOAD SAVED DATA ====================
+  useEffect(() => {
+    // Load high score from localStorage
+    const savedHighScore = storage.loadHighScore();
+    setHighScore(savedHighScore);
+    
+    // Load credits from localStorage
+    const savedCredits = storage.getCredits();
+    setCredits(savedCredits);
+    
+    console.log('📦 Loaded saved data - High Score:', savedHighScore, 'Credits:', savedCredits);
+  }, []);
+  
   // ==================== GAME CONTROL ====================
   const startGame = useCallback(() => {
     setGameState('loading');
     setLoadingProgress(0);
     setGamesPlayed(prev => prev + 1);
+    
+    // Reset lives, score, and level when starting a new game
+    setLives(3);
+    setScore(0);
+    setLevel(1);
     
     const loadInterval = setInterval(() => {
       setLoadingProgress(prev => {
@@ -150,13 +170,18 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
       setStageCompleted(clearedStage);
     },
     onStageClearComplete: () => {
-      setStageCompleted(null); // Clear the message when sequence completes
+      // Hide "STAGE X Clear" message after stage clear sequence completes
+      setStageCompleted(null);
     },
     onGameOver: (finalScoreValue) => {
       setFinalScore(finalScoreValue);
+      
+      // Save high score to localStorage and update state
+      storage.saveHighScore(finalScoreValue);
       if (finalScoreValue > highScore) {
-      setHighScore(finalScoreValue);
+        setHighScore(finalScoreValue);
       }
+      
       setGameState('gameover');
       setAvatarState('defeated');
     },
@@ -222,14 +247,17 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     },
     onPowerUpActivated: (type) => {
       console.log('Power-up activated:', type);
-      // Show power-up expression for 2 seconds, then return to normal
-      setAvatarState('power-up');
-      setTimeout(() => {
-        // Only return to normal if not in scared state (low HP)
-        if (lives > 1) {
-          setAvatarState('normal');
-        }
-      }, 2000);
+      // Only show power-up expression for individual power-ups, not SUPER_MODE
+      // SUPER_MODE activates multiple power-ups at once, which would trigger multiple timeouts
+      if (type !== 'SUPER_MODE') {
+        setAvatarState('power-up');
+        setTimeout(() => {
+          // Only return to normal if not in scared state (low HP)
+          if (lives > 1) {
+            setAvatarState('normal');
+          }
+        }, 2000);
+      }
     }
   };
   
@@ -324,12 +352,25 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
             <div style={{ 
               fontSize: '18px', 
               fontWeight: 'bold', 
-              marginBottom: '4px',
+              marginBottom: '2px',
               fontFamily: 'monospace',
               letterSpacing: '1px',
               textShadow: '0 2px 4px rgba(0,0,0,0.8)'
             }}>
               {formatScore(score)}
+            </div>
+            {/* High Score Display - Gold Font */}
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#FFD700',
+              textShadow: '0 0 10px rgba(255, 215, 0, 0.8), 0 2px 4px rgba(0,0,0,0.8)',
+              fontFamily: 'Orbitron, monospace',
+              letterSpacing: '1px',
+              marginTop: '0px',
+              marginBottom: '8px'
+            }}>
+              {formatScore(highScore)}
             </div>
             <div style={{ fontSize: '14px' }}>
               {'❤️'.repeat(Math.max(0, lives))}
@@ -935,8 +976,60 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
             bottom: '20px',
             right: '50%',
             transform: 'translateX(50%)',
-            zIndex: 10
+            zIndex: 10,
+            display: 'flex',
+            gap: '15px'
           }}>
+            {/* Change Character Button */}
+            <button
+              onClick={onMenuReturn}
+              style={{
+                padding: '12px 30px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #ff44ff 0%, #ff44ff 50%, #cc00cc 100%)',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '12px',
+                color: '#fff',
+                cursor: 'pointer',
+                boxShadow: '0 6px 20px rgba(255, 68, 255, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2)',
+                transition: 'all 0.2s ease',
+                textTransform: 'uppercase',
+                letterSpacing: '2px',
+                position: 'relative',
+                overflow: 'hidden',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px) scale(1.05)'
+                e.target.style.boxShadow = '0 8px 25px rgba(255, 68, 255, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.3)'
+                e.target.style.background = 'linear-gradient(135deg, #ff66ff 0%, #ff66ff 50%, #dd00dd 100%)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0) scale(1)'
+                e.target.style.boxShadow = '0 6px 20px rgba(255, 68, 255, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2)'
+                e.target.style.background = 'linear-gradient(135deg, #ff44ff 0%, #ff44ff 50%, #cc00cc 100%)'
+              }}
+              onMouseDown={(e) => {
+                e.target.style.transform = 'translateY(-1px) scale(1.02)'
+                e.target.style.boxShadow = '0 4px 15px rgba(255, 68, 255, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.2)'
+              }}
+              onMouseUp={(e) => {
+                e.target.style.transform = 'translateY(-2px) scale(1.05)'
+                e.target.style.boxShadow = '0 8px 25px rgba(255, 68, 255, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.3)'
+              }}
+            >
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '20px' }}>👤</span>
+                <span>Change</span>
+              </span>
+            </button>
+
+            {/* Launch Button */}
             <button
               onClick={startGame}
               style={{
@@ -1069,11 +1162,16 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
               display: 'flex',
               flexDirection: 'column',
               gap: '15px',
-              alignItems: 'center'
+              alignItems: 'center',
+              width: '100%',
+              maxWidth: '450px',
+              margin: '0 auto'
             }}>
               <button
                 onClick={startGame}
                 style={{
+                  width: '100%',
+                  minWidth: '300px',
                   padding: '14px 35px',
                   fontSize: '18px',
                   fontWeight: 'bold',
@@ -1086,7 +1184,8 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   transition: 'all 0.3s ease',
                   textTransform: 'uppercase',
                   letterSpacing: '3px',
-                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                  whiteSpace: 'nowrap'
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'translateY(-3px) scale(1.05)'
@@ -1100,9 +1199,52 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                 🔄 Play Again
               </button>
               
+              {/* Restart Stage Button - Uses Credits */}
+              <button
+                onClick={() => {
+                  if (credits > 0) {
+                    storage.useCredit();
+                    setCredits(credits - 1);
+                    setScore(0);  // Reset score to fix the bug
+                    setLives(3);   // Reset lives
+                    setLevel(1);   // Reset level
+                    setGameState('playing');
+                    setAvatarState('normal');
+                  }
+                }}
+                disabled={credits <= 0}
+                style={{
+                  width: '100%',
+                  minWidth: '300px',
+                  padding: '14px 35px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  background: credits > 0 
+                    ? 'linear-gradient(135deg, #00d4ff, #0099ff)' 
+                    : 'linear-gradient(135deg, #666, #444)',
+                  border: 'none',
+                  borderRadius: '15px',
+                  color: '#fff',
+                  cursor: credits > 0 ? 'pointer' : 'not-allowed',
+                  boxShadow: credits > 0 
+                    ? '0 8px 25px rgba(0, 153, 255, 0.5)' 
+                    : 'none',
+                  transition: 'all 0.3s ease',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                  opacity: credits > 0 ? 1 : 0.5,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {credits > 0 ? `🔄 Restart Stage (${credits} 💰)` : '❌ No Credits Left'}
+              </button>
+              
               <button
                 onClick={quitGame}
                 style={{
+                  width: '100%',
+                  minWidth: '300px',
                   padding: '14px 35px',
                   fontSize: '18px',
                   fontWeight: 'bold',
@@ -1115,7 +1257,8 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
                   transition: 'all 0.3s ease',
                   textTransform: 'uppercase',
                   letterSpacing: '3px',
-                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                  whiteSpace: 'nowrap'
                 }}
                 onMouseEnter={(e) => {
                   e.target.style.transform = 'translateY(-3px) scale(1.05)'

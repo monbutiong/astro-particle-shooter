@@ -1154,6 +1154,10 @@ class GameEngine {
     // Orbit shield balls
     this.orbitBalls = [];
     
+    // Companion ships (max 3: left, right, front)
+    this.companions = [];
+    this.maxCompanions = 3;
+    
     // Object pools
     this.bulletPool = new ObjectPool(() => ({
       x: 0, y: 0, vx: 0, vy: 0, active: false, size: 5, color: '#fff', isEnemy: false
@@ -1371,6 +1375,17 @@ class GameEngine {
       'steroids-4': '/assets/none-shooting-enemy/steriods-4.fw.png',
       'steroids-5': '/assets/none-shooting-enemy/steriods-5.fw.png',
       'steroids-6': '/assets/none-shooting-enemy/steriods-6.fw.png',
+      // Dash enemies
+      'steriods-dash-1': '/assets/none-shooting-enemy/steriods-dash-1.fw.png',
+      'steriods-dash-2': '/assets/none-shooting-enemy/steriods-dash-2.fw.png',
+      'steriods-dash-3': '/assets/none-shooting-enemy/steriods-dash-3.fw.png',
+      'steriods-dash-4': '/assets/none-shooting-enemy/steriods-dash-4.fw.png',
+      'steriods-dash-5': '/assets/none-shooting-enemy/steriods-dash-5.fw.png',
+      'steriods-dash-6': '/assets/none-shooting-enemy/steriods-dash-6.fw.png',
+      // Explode enemies
+      'enemy-explode-1': '/assets/shooting-enemy/enemy-explode-1.fw.png',
+      'enemy-explode-2': '/assets/shooting-enemy/enemy-explode-2.fw.png',
+      'enemy-explode-3': '/assets/shooting-enemy/enemy-explode-3.fw.png',
       // Bosses
       'boss-1': '/assets/boss/boss-1.fw.png',
       'boss-2': '/assets/boss/boss-2.fw.png',
@@ -1847,6 +1862,7 @@ class GameEngine {
       bullet.vx = Math.sin(angle) * 10;
       bullet.vy = Math.cos(angle) * baseSpeed;
       bullet.active = true;
+      bullet.size = 5; // Reset to normal size
       bullet.color = bulletColor;
       bullet.isEnemy = false;
       bullet.isHoming = isHoming; // Mark for homing behavior
@@ -2506,6 +2522,15 @@ class GameEngine {
     }
     
     this.player.hp--;
+    
+    // Destroy all companions when player is hit!
+    if (this.companions.length > 0) {
+      for (const comp of this.companions) {
+        this.createParticles(comp.x, comp.y, comp.color, 10);
+      }
+      this.companions = [];
+      console.log('Player hit! All companions destroyed.');
+    }
     
     // Reset player level to 0 when hit!
     if (this.player.level > 0) {
@@ -3216,8 +3241,10 @@ class GameEngine {
       const superDuration = config.duration;
       
       // Activate all timed power-ups
+      // NOTE: ALLY_SUPPORT is NOT included here because it spawns companions instantly
+      // We'll handle it separately below
       const powerUpsToActivate = ['TRIPLE_SHOT', 'DOUBLE_DAMAGE', 'HOMING_MISSILES', 
-                                    'ORBIT_SHIELD', 'ALLY_SUPPORT', 'INVINCIBILITY', 'TIME_FREEZE'];
+                                    'ORBIT_SHIELD', 'INVINCIBILITY', 'TIME_FREEZE'];
       
       for (const puType of powerUpsToActivate) {
         if (!this.player.activePowerUps[puType]) {
@@ -3226,6 +3253,21 @@ class GameEngine {
         this.player.activePowerUps[puType].push(now + superDuration);
         console.log(`SUPER MODE: Activated ${POWERUP_TYPES[puType].name}`);
       }
+      
+      
+      // Spawn ONE companion for SUPER_MODE (ALLY_SUPPORT effect)
+      const positions = ['left', 'front', 'right'];
+      console.log('🔍 SUPER_MODE: About to spawn companion. Current companions:', this.companions.length);
+      for (const pos of positions) {
+        console.log(`🔍 Checking position: ${pos}, is taken?`, this.companions.some(c => c.position === pos));
+        // Only spawn if this position is not already taken
+        if (!this.companions.some(c => c.position === pos)) {
+          console.log(`✅ SUPER_MODE: Spawning companion at ${pos}`);
+          this.addCompanion(pos);
+          break; // Stop after spawning ONE companion
+        }
+      }
+      console.log('🔍 SUPER_MODE: Finished spawning. Total companions:', this.companions.length);
       
       // Epic screen flash for super mode!
       this.callbacks.onPowerUpActivated?.('SUPER_MODE');
@@ -3236,6 +3278,21 @@ class GameEngine {
     
     // Handle timed power-ups (can stack)
     const now = Date.now();
+    
+    // Special handling for ALLY_SUPPORT - spawn ONE companion at a time
+    if (type === 'ALLY_SUPPORT') {
+      // Spawn ONE companion in the next available position
+      // Collecting multiple times accumulates up to max 3
+      const positions = ['left', 'front', 'right'];
+      for (const pos of positions) {
+        // Only spawn if this position is not already taken
+        if (!this.companions.some(c => c.position === pos)) {
+          this.addCompanion(pos);
+          break; // Stop after spawning ONE companion
+        }
+      }
+    }
+    
     if (!this.player.activePowerUps[type]) {
       this.player.activePowerUps[type] = [];
     }
@@ -3382,91 +3439,204 @@ class GameEngine {
       ctx.restore();
     }
   }
+  // ==================== COMPANION SYSTEM ====================
+  // Max 3 companions positioned: left, right, front
+  // Can be destroyed by enemy collisions or enemy bullets
+  addCompanion(position) {
+    // position: 'left', 'right', or 'front'
+    if (this.companions.length >= this.maxCompanions) {
+      console.log('❌ Cannot add companion: max limit reached (3)');
+      return false;
+    }
+    
+    // Check if position already taken
+    if (this.companions.some(c => c.position === position)) {
+      console.log(`❌ Cannot add companion: position ${position} already taken`);
+      return false;
+    }
+    
+    // Determine companion ship type (random, but different from player)
+    const shipTypes = ['blue', 'red', 'yellow', 'pink'];
+    const availableShipTypes = shipTypes.filter(type => type !== this.characterType);
+    const randomShipType = availableShipTypes[Math.floor(Math.random() * availableShipTypes.length)];
+    
+    // Get random color that matches the ship type
+    const shipColorMap = {
+      'blue': '#4488ff',
+      'red': '#ff4444',
+      'yellow': '#ffff44',
+      'pink': '#ff44ff'
+    };
+    const companionColor = shipColorMap[randomShipType];
+    
+    // Calculate position offsets
+    const offsets = {
+      'left': { x: -80, y: 0 },
+      'front': { x: 0, y: -60 },
+      'right': { x: 80, y: 0 }
+    };
+    
+    this.companions.push({
+      position: position,
+      targetX: this.player.x + offsets[position].x,
+      targetY: this.player.y + offsets[position].y,
+      x: this.player.x + offsets[position].x,
+      y: this.player.y + offsets[position].y,
+      lastShot: 0,
+      fireRate: 500, // 50% slower than normal (500ms instead of 250ms)
+      shipType: randomShipType, // Store the ship type for rendering
+      color: companionColor, // Use color that matches ship type
+      hp: 1, // Can be destroyed in one hit
+      size: 25, // Visual size (used for rendering reference)
+      collisionRadius: 30 // Collision radius (half of 60px ship height)
+    });
+    
+    console.log(`✅ Companion added at ${position}! Total companions: ${this.companions.length}`);
+    this.soundManager?.playSound('ui.powerup');
+    return true;
+  }
   
-  // ==================== ALLY SUPPORT ====================
   
-  updateAllySupport(dt) {
-    if (this.hasActivePowerUp('ALLY_SUPPORT')) {
-      if (!this.allyShip) {
-        // Create ally ship
-        this.allyShip = {
-          x: this.player.x - 100,
-          y: this.player.y,
-          lastShot: 0,
-          fireRate: 300
-        };
+  updateCompanions(dt) {
+    // Companions stay until destroyed (don't clear when power-up expires)
+    // They only get removed when hit by enemies/bullets or when player is hit
+    
+    const offsets = {
+      'left': { x: -80, y: 0 },
+      'right': { x: 80, y: 0 },
+      'front': { x: 0, y: -60 }
+    };
+    
+    const now = Date.now();
+    
+    for (let i = this.companions.length - 1; i >= 0; i--) {
+      const comp = this.companions[i];
+      
+      // Update target position based on player position
+      comp.targetX = this.player.x + offsets[comp.position].x;
+      comp.targetY = this.player.y + offsets[comp.position].y;
+      
+      // Smooth follow with easing
+      comp.x += (comp.targetX - comp.x) * 0.08;
+      comp.y += (comp.targetY - comp.y) * 0.08;
+      
+      // Shoot at nearest enemy
+      if (now - comp.lastShot > comp.fireRate) {
+        comp.lastShot = now;
+        
+        // Fire straight ahead (not lock-on)
+        const bullet = this.bulletPool.get();
+        bullet.x = comp.x;
+        bullet.y = comp.y;
+        bullet.vx = 0; // No horizontal velocity
+        bullet.vy = -10; // Straight up
+        bullet.active = true;
+        bullet.color = comp.color;
+        bullet.isEnemy = false;
+        bullet.damage = 1;
+        bullet.size = 4; // Smaller bullets for companions
+        this.bullets.push(bullet);
+      }
+    }
+  }
+  
+  destroyCompanion(index) {
+    if (index >= 0 && index < this.companions.length) {
+      const comp = this.companions[index];
+      
+      // Create explosion effect
+      this.createParticles(comp.x, comp.y, comp.color, 15);
+      this.soundManager?.playSound('enemy.explosion');
+      
+      // Remove companion
+      this.companions.splice(index, 1);
+    }
+  }
+  
+  checkCompanionCollisions() {
+    // Check if companions are hit by enemies or enemy bullets
+    for (let i = this.companions.length - 1; i >= 0; i--) {
+      const comp = this.companions[i];
+      
+      // Check collision with enemies
+      for (const enemy of this.enemies) {
+        const dx = comp.x - enemy.x;
+        const dy = comp.y - enemy.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // Use collisionRadius instead of size for accurate collision detection
+        if (dist < comp.collisionRadius + enemy.size) {
+          this.destroyCompanion(i);
+          break; // Companion destroyed, move to next
+        }
       }
       
-      // Ally follows player
-      this.allyShip.x += (this.player.x - 100 - this.allyShip.x) * 0.05;
-      this.allyShip.y += (this.player.y - this.allyShip.y) * 0.05;
-      
-      // Ally shoots at enemies
-      const now = Date.now();
-      if (now - this.allyShip.lastShot > this.allyShip.fireRate) {
-        this.allyShip.lastShot = now;
-        
-        // Find nearest enemy
-        let nearestEnemy = null;
-        let nearestDist = Infinity;
-        for (const enemy of this.enemies) {
-          const dx = enemy.x - this.allyShip.x;
-          const dy = enemy.y - this.allyShip.y;
+      // Check collision with enemy bullets
+      for (const bullet of this.bullets) {
+        if (bullet.isEnemy && bullet.active) {
+          const dx = comp.x - bullet.x;
+          const dy = comp.y - bullet.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < nearestDist) {
-            nearestDist = dist;
-            nearestEnemy = enemy;
+          
+          // Use collisionRadius instead of size for accurate collision detection
+          if (dist < comp.collisionRadius + bullet.size) {
+            bullet.active = false; // Destroy bullet
+            this.destroyCompanion(i);
+            break; // Companion destroyed, move to next
           }
         }
-        
-        if (nearestEnemy) {
-          // Shoot at enemy
-          const dx = nearestEnemy.x - this.allyShip.x;
-          const dy = nearestEnemy.y - this.allyShip.y;
-          const angle = Math.atan2(dy, dx);
-          
-          const bullet = this.bulletPool.get();
-          bullet.x = this.allyShip.x;
-          bullet.y = this.allyShip.y;
-          bullet.vx = Math.cos(angle) * 10;
-          bullet.vy = Math.sin(angle) * 10;
-          bullet.active = true;
-          bullet.color = '#FFE4B5';
-          bullet.isEnemy = false;
-          bullet.damage = 1;
-          this.bullets.push(bullet);
-        }
       }
-    } else {
-      this.allyShip = null;
+    }
+  }
+  
+  updateAllySupport(dt) {
+    // Legacy method - redirects to new companion system
+    this.updateCompanions(dt);
+    this.checkCompanionCollisions();
+  }
+  
+  renderCompanions(ctx) {
+    for (const comp of this.companions) {
+      ctx.save();
+      ctx.translate(comp.x, comp.y);
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = comp.color;
+      ctx.fillStyle = comp.color;
+      
+      // Draw companion ship image
+      const imageKey = `ally-ship-${comp.shipType}`;
+      const image = this.assetLoader?.images.get(imageKey);
+      
+      if (image) {
+        if (image.complete) {
+          // Get natural image dimensions to maintain aspect ratio
+          const naturalWidth = image.naturalWidth;
+          const naturalHeight = image.naturalHeight;
+          const aspectRatio = naturalWidth / naturalHeight;
+          
+          // Base size on height (60px tall for companions, same as player)
+          const shipHeight = 60;
+          const shipWidth = shipHeight * aspectRatio;
+          
+          ctx.drawImage(image, -shipWidth / 2, -shipHeight / 2, shipWidth, shipHeight);
+        }
+      } else {
+        // Fallback to triangle if no image
+        ctx.beginPath();
+        ctx.moveTo(0, -15);
+        ctx.lineTo(-10, 10);
+        ctx.lineTo(10, 10);
+        ctx.closePath();
+        ctx.fill();
+      }
+      
+      ctx.restore();
     }
   }
   
   renderAllySupport(ctx) {
-    if (!this.hasActivePowerUp('ALLY_SUPPORT') || !this.allyShip) return;
-    
-    ctx.save();
-    ctx.translate(this.allyShip.x, this.allyShip.y);
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = '#FFE4B5';
-    ctx.fillStyle = '#FFE4B5';
-    
-    // Draw ally ship (simple triangle for now)
-    ctx.beginPath();
-    ctx.moveTo(0, -15);
-    ctx.lineTo(-10, 10);
-    ctx.lineTo(10, 10);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.restore();
-  }
-  
-  // Helper function to get boss configuration for current level
-  getBossConfig() {
-    const bossStage = Math.min(this.currentLevel, 5);
-    const bossKey = `STAGE_${bossStage}`;
-    return BOSSES[bossKey] || BOSSES.STAGE_1;
+    // Legacy method - redirects to new companion system
+    this.renderCompanions(ctx);
   }
   
   spawnBoss() {
@@ -3973,11 +4143,10 @@ class GameEngine {
         ctx.fill();
       }
       ctx.restore();
-    }
-  
     // Draw overlays on top of everything
     this.renderStageClearOverlay(ctx);
     this.renderWipeOverlay(ctx);
+    }
   }
   
   initStars() {

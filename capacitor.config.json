@@ -1,6 +1,6 @@
 {
-  "appId": "com.monxdev.astroparticleshooter",
-  "appName": "Astro Particle Shooter",
+  "appId": "com.monxdev.galacticbarrage",
+  "appName": "Galactic Barrage",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

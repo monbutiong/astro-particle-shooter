@@ -1,8 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useBackgroundMusic, playClickSound } from '../hooks/useAudio';
+import { storage } from '../utils/storage';
 
 const NameEntry = ({ playerName, setPlayerName, onNext }) => {
   const [localName, setLocalName] = useState(playerName || '');
+
+  // Load saved player name on mount
+  useEffect(() => {
+    const savedName = storage.loadPlayerName();
+    if (savedName && savedName !== 'Player') {
+      setLocalName(savedName);
+      setPlayerName(savedName);
+    }
+  }, [setPlayerName]);
 
   // Play background music
   useBackgroundMusic(true, '/assets/audio/menu-background.mp3');
@@ -11,7 +21,10 @@ const NameEntry = ({ playerName, setPlayerName, onNext }) => {
     e.preventDefault();
     if (localName.trim()) {
       playClickSound();
-      setPlayerName(localName.trim());
+      const trimmedName = localName.trim();
+      setPlayerName(trimmedName);
+      // Save player name to localStorage
+      storage.savePlayerName(trimmedName);
       onNext();
     }
   };

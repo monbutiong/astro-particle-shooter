@@ -105,13 +105,12 @@ const CharacterSelect = ({ onSelectCharacter }) => {
 
   const handleConfirm = () => {
     if (selectedChar) {
-      playClickSound();
       onSelectCharacter(selectedChar);
     }
   };
 
   return (
-    <div 
+    <div
       className="absolute inset-0 flex items-center justify-center bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: "url('/assets/images/select-a-character.png')" }}
     >

@@ -1,16 +1,54 @@
-# React + Vite
+# Galactic Barrage
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An epic space shooter game built with React, Vite, and Capacitor.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Fast-paced space shooter gameplay
+- Multiple character selection with unique ships
+- Progressive difficulty through 13 stages
+- Boss battles at each stage
+- Power-ups and ship evolution system
+- Mobile-optimized with Android back button support
+- High score tracking with local storage
+- Daily credits system for replayability
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19** - UI framework
+- **Vite** - Build tool and dev server
+- **Capacitor** - Native mobile app wrapper
+- **Howler.js** - Audio management
+- **Firebase** - Backend services
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Sync with Android
+npx cap sync android
+
+# Open Android Studio
+npx cap open android
+```
+
+## Game Controls
+
+- **Desktop**: Arrow keys to move, Space to shoot
+- **Mobile**: Touch and drag to move, auto-shoot enabled
+- **Android Back Button**: Navigates through screens with confirmation dialogs
+
+## Project Structure
+
+- `/src/components` - React components (game, character select, name entry)
+- `/src/engine` - Game engine logic
+- `/src/utils` - Utility functions (storage, audio)
+- `/assets` - Images and audio files
