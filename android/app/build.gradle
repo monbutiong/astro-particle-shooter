@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.monxdev.astroparticleshooter"
+    namespace "com.monxdev.galacticbarrage"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.monxdev.astroparticleshooter"
+        applicationId "com.monxdev.galacticbarrage"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
