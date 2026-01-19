@@ -16,7 +16,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
   const [gameState, setGameState] = useState('menu');
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
-  const [level, setLevel] = useState(1);
+  const [level, setLevel] = useState(1); // Ship upgrade level (0-3)
+  const [stage, setStage] = useState(1); // Game stage (1-13)
+  const [cycle, setCycle] = useState(1); // Game cycle (1st playthrough, 2nd, etc.)
   const [finalScore, setFinalScore] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [bossWarning, setBossWarning] = useState(null);
@@ -150,6 +152,7 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
     setGameState('menu');
     setScore(0);
     setLives(3);
+    setStage(1);
     setLevel(1);
     setAvatarState('normal');
   }, []);
@@ -162,10 +165,16 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
         setHighScore(newScore);
       }
     },
-    onLevelUp: (newLevel) => {
+    onLevelUp: (newLevel, newCycle) => {
       setLevel(newLevel);
+      setCycle(newCycle);
+      // Show cycle notification on HUD when starting cycle 2+
+      if (newCycle > 1) {
+        console.log(`🎮 Cycle ${newCycle} started! Enemies: ${Math.pow(2, newCycle - 1)}x, Boss HP: ${Math.pow(1.3, newCycle - 1).toFixed(1)}x`);
+      }
     },
     onStageCleared: (clearedStage) => {
+      setStage(clearedStage + 1);
       // Show "STAGE X Clear" message immediately
       setStageCompleted(clearedStage);
     },
@@ -173,8 +182,9 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
       // Hide "STAGE X Clear" message after stage clear sequence completes
       setStageCompleted(null);
     },
-    onGameOver: (finalScoreValue) => {
+    onGameOver: (finalScoreValue, finalStage) => {
       setFinalScore(finalScoreValue);
+      setStage(finalStage);
       
       // Save high score to localStorage and update state
       storage.saveHighScore(finalScoreValue);
@@ -370,13 +380,56 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
               marginTop: '0px',
               marginBottom: '8px'
             }}>
-              {formatScore(highScore)}
+              {cycle > 1 && (
+                <span style={{
+                  fontSize: '12px',
+                  color: '#ff6600',
+                  fontWeight: 'bold',
+                  textShadow: '0 0 8px rgba(255, 102, 0, 0.8)'
+                }}>
+                  🔥 CYCLE {cycle}
+                </span>
+              )}
             </div>
-            <div style={{ fontSize: '14px' }}>
-              {'❤️'.repeat(Math.max(0, lives))}
+            <div style={{ 
+              fontSize: '14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2px',
+              alignItems: 'flex-start'
+            }}>
+              {/* Row 1: Hearts 1-4 */}
+              <div>
+                {Array.from({ length: 4 }, (_, i) => (
+                  <span 
+                    key={i} 
+                    style={{ 
+                      opacity: i < lives ? 1 : 0.5,
+                      display: 'inline-block',
+                      margin: '0 1px'
+                    }}
+                  >
+                    ❤️
+                  </span>
+                ))}
+              </div>
+              {/* Row 2: Hearts 5-8 */}
+              <div>
+                {Array.from({ length: 4 }, (_, i) => (
+                  <span 
+                    key={i + 4} 
+                    style={{ 
+                      opacity: i + 4 < lives ? 1 : 0.5,
+                      display: 'inline-block',
+                      margin: '0 1px'
+                    }}
+                  >
+                    ❤️
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-          
           <div style={{ textAlign: 'right' }}>
             <div style={{
               width: '50px',
@@ -1154,7 +1207,7 @@ const SpaceSnakeGameNew = ({ playerName, onMenuReturn, characterType = 'blue' })
               color: '#aaa',
               fontStyle: 'italic'
             }}>
-              Level Reached: {level}
+              Level Reached: {stage}
             </div>
             
             {/* Buttons */}

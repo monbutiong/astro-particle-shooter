@@ -115,7 +115,7 @@ const BOSSES = {
     names: ['Mega Destroyer', 'Cyber Tyrant'], // 2 names per boss - will be randomly selected
     spawnTime: 60, // seconds before appearing
     size: 130, // Boss size in pixels (larger = bigger)
-    speed: 1.0, // Movement speed
+    speed: 0.3, // Movement speed
     hp: 100, // Health points
     maxHp: 100, // Maximum health
     points: 1000, // Score awarded when defeated
@@ -130,7 +130,7 @@ const BOSSES = {
     
     // Movement: Enters from top, then moves side-to-side
     movementType: 'side-to-side',
-    movementSpeed: 1.0,
+    movementSpeed: 0.3,
     targetY: 150, // Y position where boss stops descending
     
     // Special abilities
@@ -149,7 +149,7 @@ const BOSSES = {
     imageKeyBase: 'boss-2', // Will randomly use boss-2.fw.png or boss-2-alternative.fw.png
     spawnTime: 60, // seconds (resets after each boss defeat)
     size: 140, // Larger than stage 1
-    speed: 1.5, // Faster movement
+    speed: 0.5, // Faster movement
     hp: 150, // More health
     maxHp: 150,
     points: 2500, // More points
@@ -162,7 +162,7 @@ const BOSSES = {
     bulletDamage: 1,
     
     movementType: 'side-to-side',
-    movementSpeed: 1.5,
+    movementSpeed: 0.5,
     targetY: 120,
     
     // Special: Occasial burst fire
@@ -180,7 +180,7 @@ const BOSSES = {
     imageKeyBase: 'boss-3', // Will randomly use boss-3.fw.png or boss-3-alternative.fw.png
     spawnTime: 60,
     size: 150,
-    speed: 2.0,
+    speed: 0.8,
     hp: 200,
     maxHp: 200,
     points: 5000,
@@ -193,7 +193,7 @@ const BOSSES = {
     bulletDamage: 2, // More damage
     
     movementType: 'circular', // Circular movement pattern
-    movementSpeed: 2.0,
+    movementSpeed: 0.8,
     targetY: 100,
     
     // Special: Spiral bullet hell
@@ -211,7 +211,7 @@ const BOSSES = {
     imageKeyBase: 'boss-4', // Will randomly use boss-4.fw.png or boss-4-alternative.fw.png
     spawnTime: 60,
     size: 160,
-    speed: 2.0,
+    speed: 1.0,
     hp: 300,
     maxHp: 300,
     points: 10000,
@@ -224,7 +224,7 @@ const BOSSES = {
     bulletDamage: 2,
     
     movementType: 'erratic', // Unpredictable movement
-    movementSpeed: 2.0,
+    movementSpeed: 1.0,
     targetY: 80,
     
     // Multiple special attacks
@@ -242,7 +242,7 @@ const BOSSES = {
     imageKeyBase: 'boss-5', // Will randomly use boss-5.fw.png or boss-5-alternative.fw.png
     spawnTime: 60,
     size: 180, // Massive
-    speed: 2.0,
+    speed: 1.1,
     hp: 500, // Boss with 500 HP
     maxHp: 500,
     points: 50000, // Huge score
@@ -255,7 +255,7 @@ const BOSSES = {
     bulletDamage: 3, // High damage
     
     movementType: 'teleport', // Teleports around
-    movementSpeed: 2.0,
+    movementSpeed: 1.1,
     targetY: 60,
     
     // Constant special attacks
@@ -274,7 +274,7 @@ const BOSSES = {
     imageKeyBase: 'boss-6', // Will randomly use boss-6.fw.png or boss-6-alternative.fw.png
     spawnTime: 60,
     size: 190,
-    speed: 2.2,
+    speed: 1.2,
     hp: 600,
     maxHp: 600,
     points: 75000,
@@ -284,7 +284,7 @@ const BOSSES = {
     bulletSpeed: 11,
     bulletDamage: 3,
     movementType: 'teleport',
-    movementSpeed: 2.2,
+    movementSpeed: 1.2,
     targetY: 55,
     hasSpecialAttack: true,
     specialAttackInterval: 1800,
@@ -297,7 +297,7 @@ const BOSSES = {
     imageKeyBase: 'boss-7', // Will randomly use boss-7.fw.png or boss-7-alternative.fw.png
     spawnTime: 60,
     size: 200,
-    speed: 2.4,
+    speed: 1.2,
     hp: 700,
     maxHp: 700,
     points: 100000,
@@ -307,7 +307,7 @@ const BOSSES = {
     bulletSpeed: 11,
     bulletDamage: 4,
     movementType: 'erratic',
-    movementSpeed: 2.4,
+    movementSpeed: 1.3,
     targetY: 50,
     hasSpecialAttack: true,
     specialAttackInterval: 1500,
@@ -320,7 +320,7 @@ const BOSSES = {
     imageKeyBase: 'boss-8', // Will randomly use boss-8.fw.png or boss-8-alternative.fw.png
     spawnTime: 60,
     size: 210,
-    speed: 2.6,
+    speed: 1.4,
     hp: 800,
     maxHp: 800,
     points: 150000,
@@ -330,7 +330,7 @@ const BOSSES = {
     bulletSpeed: 12,
     bulletDamage: 4,
     movementType: 'circular',
-    movementSpeed: 2.6,
+    movementSpeed: 1.4,
     targetY: 45,
     hasSpecialAttack: true,
     specialAttackInterval: 1200,
@@ -343,7 +343,7 @@ const BOSSES = {
     imageKeyBase: 'boss-9', // Will randomly use boss-9.fw.png or boss-9-alternative.fw.png
     spawnTime: 60,
     size: 220,
-    speed: 2.8,
+    speed: 1.5,
     hp: 900,
     maxHp: 900,
     points: 200000,
@@ -353,7 +353,7 @@ const BOSSES = {
     bulletSpeed: 12,
     bulletDamage: 4,
     movementType: 'teleport',
-    movementSpeed: 2.8,
+    movementSpeed: 1.5,
     targetY: 40,
     hasSpecialAttack: true,
     specialAttackInterval: 1000,
@@ -366,7 +366,7 @@ const BOSSES = {
     imageKeyBase: 'boss-10', // Will randomly use boss-10.fw.png or boss-10-alternative.fw.png
     spawnTime: 60,
     size: 230,
-    speed: 3.0,
+    speed: 1.6,
     hp: 1000,
     maxHp: 1000,
     points: 250000,
@@ -376,7 +376,7 @@ const BOSSES = {
     bulletSpeed: 13,
     bulletDamage: 5,
     movementType: 'erratic',
-    movementSpeed: 3.0,
+    movementSpeed: 1.6,
     targetY: 35,
     hasSpecialAttack: true,
     specialAttackInterval: 800,
@@ -389,7 +389,7 @@ const BOSSES = {
     imageKeyBase: 'boss-11', // Will randomly use boss-11.fw.png or boss-11-alternative.fw.png
     spawnTime: 60,
     size: 240,
-    speed: 3.2,
+    speed: 1.7,
     hp: 1200,
     maxHp: 1200,
     points: 350000,
@@ -399,7 +399,7 @@ const BOSSES = {
     bulletSpeed: 13,
     bulletDamage: 5,
     movementType: 'teleport',
-    movementSpeed: 3.2,
+    movementSpeed: 1.7,
     targetY: 30,
     hasSpecialAttack: true,
     specialAttackInterval: 600,
@@ -412,7 +412,7 @@ const BOSSES = {
     imageKeyBase: 'boss-12', // Will randomly use boss-12.fw.png or boss-12-alternative.fw.png
     spawnTime: 60,
     size: 250,
-    speed: 3.4,
+    speed: 1.8,
     hp: 1400,
     maxHp: 1400,
     points: 500000,
@@ -422,7 +422,7 @@ const BOSSES = {
     bulletSpeed: 14,
     bulletDamage: 5,
     movementType: 'circular',
-    movementSpeed: 3.4,
+    movementSpeed: 1.8,
     targetY: 25,
     hasSpecialAttack: true,
     specialAttackInterval: 500,
@@ -445,7 +445,7 @@ const BOSSES = {
     bulletSpeed: 15,
     bulletDamage: 6,
     movementType: 'teleport',
-    movementSpeed: 3.6,
+    movementSpeed: 1.9,
     targetY: 20,
     hasSpecialAttack: true,
     specialAttackInterval: 400,
@@ -1231,6 +1231,9 @@ class GameEngine {
     this.spawnTimer = 0;
     this.spawnTimer = 0;
     this.currentLevel = 1;
+    this.gameCycle = 1; // Track game cycles (1st playthrough, 2nd, etc.)
+    this.enemySpawnMultiplier = 1.0; // Increases by 2x each cycle
+    this.bossHpMultiplier = 1.0; // Increases by 30% each cycle
     this.enemiesSpawned = 0;
     this.enemies = [];
     
@@ -2538,16 +2541,6 @@ class GameEngine {
     }
     
     this.player.hp--;
-    
-    // Destroy all companions when player is hit!
-    if (this.companions.length > 0) {
-      for (const comp of this.companions) {
-        this.createParticles(comp.x, comp.y, comp.color, 10);
-      }
-      this.companions = [];
-      console.log('Player hit! All companions destroyed.');
-    }
-    
     // Reset player level to 0 when hit!
     if (this.player.level > 0) {
       const oldLevel = this.player.level;
@@ -2579,7 +2572,7 @@ class GameEngine {
       this.player.isDead = true;
       
       // Show game over immediately, but keep game running
-      this.callbacks.onGameOver?.(this.player.score);
+      this.callbacks.onGameOver?.(this.player.score, this.currentLevel);
       this.isGameOver = true; // Flag to stop player input but keep rendering
     }
   }
@@ -2878,11 +2871,17 @@ class GameEngine {
     
     // During boss fight: double spawn rate (half the time)
     // Normal time: regular spawn rate
-    const spawnRate = this.bossActive ? GAME_CONFIG.SPAWN_RATE / 2 : GAME_CONFIG.SPAWN_RATE;
+    // Apply cycle multiplier (2x, 4x, 8x, etc. for each cycle)
+    let spawnRate = this.bossActive ? GAME_CONFIG.SPAWN_RATE / 2 : GAME_CONFIG.SPAWN_RATE;
+    spawnRate = spawnRate / this.enemySpawnMultiplier; // Divide by multiplier to spawn more frequently
     
     if (this.lastSpawn >= spawnRate) {
       this.lastSpawn = 0;
-      this.spawnEnemy();
+      // Spawn multiple enemies per cycle based on multiplier
+      const enemiesToSpawn = Math.ceil(this.enemySpawnMultiplier);
+      for (let i = 0; i < enemiesToSpawn; i++) {
+        this.spawnEnemy();
+      }
     }
   }
   
@@ -3230,7 +3229,7 @@ class GameEngine {
     }
     
     if (type === 'EXTRA_LIFE') {
-      this.player.hp = Math.min(this.player.hp + 1, 5);
+      this.player.hp = Math.min(this.player.hp + 1, 8);
       this.callbacks.onLivesChange?.(this.player.hp);
       return;
     }
@@ -3616,7 +3615,8 @@ class GameEngine {
   updateAllySupport(dt) {
     // Legacy method - redirects to new companion system
     this.updateCompanions(dt);
-    this.checkCompanionCollisions();
+    // DISABLED: Companions can no longer be hit/destroyed
+    // this.checkCompanionCollisions();
   }
   
   renderCompanions(ctx) {
@@ -3684,8 +3684,8 @@ class GameEngine {
       size: bossConfig.size,
       speed: bossConfig.speed,
       targetY: bossConfig.targetY || 150,
-      hp: bossConfig.hp + (this.currentLevel * 5), // Scale HP with level
-      maxHp: bossConfig.maxHp + (this.currentLevel * 5),
+      hp: Math.floor((bossConfig.hp + (this.currentLevel * 5)) * this.bossHpMultiplier), // Scale HP with level and cycle
+      maxHp: Math.floor((bossConfig.maxHp + (this.currentLevel * 5)) * this.bossHpMultiplier),
       points: bossConfig.points,
       color: bossConfig.color,
       time: 0,
@@ -3856,10 +3856,22 @@ class GameEngine {
         this.bullets = [];
         this.particles = [];
         this.enemiesSpawned = 0;
-        this.currentLevel++;
+        
+        // Check if completing boss 13 - start new cycle with increased difficulty
+        if (this.currentLevel >= 13) {
+          console.log(`🎉 CYCLE COMPLETE! Starting Cycle ${this.gameCycle + 1}...`);
+          this.currentLevel = 1; // Loop back to stage 1
+          this.gameCycle++; // Increment cycle counter
+          this.enemySpawnMultiplier *= 2; // Double enemy spawns
+          this.bossHpMultiplier *= 1.3; // 30% increase to boss HP
+          console.log(`📊 New Difficulty: ${this.enemySpawnMultiplier}x enemies, ${this.bossHpMultiplier}x boss HP`);
+        } else {
+          this.currentLevel++;
+        }
+        
         this.resetBossTimer();
         this.callbacks.onStageClearComplete?.(); // Clear the message!
-        this.callbacks.onLevelUp?.(this.currentLevel);
+        this.callbacks.onLevelUp?.(this.currentLevel, this.gameCycle);
         
         // Restore player data (score and hp only)
         this.player.score = this.savedScore;
