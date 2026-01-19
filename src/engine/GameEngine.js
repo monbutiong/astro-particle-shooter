@@ -112,7 +112,7 @@ const BOSSES = {
   // Stage 1 Boss (60 seconds)
   STAGE_1: {
     stage: 1,
-    name: 'Mega Destroyer',
+    names: ['Mega Destroyer', 'Cyber Tyrant'], // 2 names per boss - will be randomly selected
     spawnTime: 60, // seconds before appearing
     size: 130, // Boss size in pixels (larger = bigger)
     speed: 1.0, // Movement speed
@@ -120,7 +120,7 @@ const BOSSES = {
     maxHp: 100, // Maximum health
     points: 1000, // Score awarded when defeated
     color: '#ff00ff', // Color for debug/backup rendering
-    imageKey: 'boss-1', // Image file: boss-1.png
+    imageKeyBase: 'boss-1', // Will randomly use boss-1.fw.png or boss-1-alternative.fw.png
     
     // Attack Pattern 0: Straight shooting + occasional spread
     attackPatterns: ['straight', 'spread'],
@@ -145,7 +145,8 @@ const BOSSES = {
   // Stage 2 Boss (120 seconds = 2 minutes)
   STAGE_2: {
     stage: 2,
-    name: 'Doom Bringer',
+    names: ['Doom Bringer', 'Shadow Wraith'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-2', // Will randomly use boss-2.fw.png or boss-2-alternative.fw.png
     spawnTime: 60, // seconds (resets after each boss defeat)
     size: 140, // Larger than stage 1
     speed: 1.5, // Faster movement
@@ -153,7 +154,6 @@ const BOSSES = {
     maxHp: 150,
     points: 2500, // More points
     color: '#ff4400',
-    imageKey: 'boss-2',
     
     // Attack Pattern 1: Spread shot + aimed shots
     attackPatterns: ['spread', 'aimed'],
@@ -176,7 +176,8 @@ const BOSSES = {
   // Stage 3 Boss (180 seconds = 3 minutes)
   STAGE_3: {
     stage: 3,
-    name: 'Death Star',
+    names: ['Death Star', 'Nova Crusher'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-3', // Will randomly use boss-3.fw.png or boss-3-alternative.fw.png
     spawnTime: 60,
     size: 150,
     speed: 2.0,
@@ -184,7 +185,6 @@ const BOSSES = {
     maxHp: 200,
     points: 5000,
     color: '#00ff00',
-    imageKey: 'boss-3',
     
     // Attack Pattern 2: Spiral + aimed bursts
     attackPatterns: ['spiral', 'bursts'],
@@ -207,7 +207,8 @@ const BOSSES = {
   // Stage 4 Boss (240 seconds = 4 minutes)
   STAGE_4: {
     stage: 4,
-    name: 'Omega Destroyer',
+    names: ['Omega Destroyer', 'Chaos Guardian'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-4', // Will randomly use boss-4.fw.png or boss-4-alternative.fw.png
     spawnTime: 60,
     size: 160,
     speed: 2.0,
@@ -215,7 +216,6 @@ const BOSSES = {
     maxHp: 300,
     points: 10000,
     color: '#ffff00',
-    imageKey: 'boss-4',
     
     // All attack patterns combined
     attackPatterns: ['straight', 'spread', 'aimed', 'spiral'],
@@ -238,7 +238,8 @@ const BOSSES = {
   // Stage 5 Boss (300 seconds = 5 minutes)
   STAGE_5: {
     stage: 5,
-    name: 'GALAXY DEVOURER',
+    names: ['GALAXY DEVOURER', 'Cosmic Reaper'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-5', // Will randomly use boss-5.fw.png or boss-5-alternative.fw.png
     spawnTime: 60,
     size: 180, // Massive
     speed: 2.0,
@@ -246,7 +247,6 @@ const BOSSES = {
     maxHp: 500,
     points: 50000, // Huge score
     color: '#ff0080',
-    imageKey: 'boss-5',
     
     // Ultimate attack patterns
     attackPatterns: ['ultimate'],
@@ -270,7 +270,8 @@ const BOSSES = {
   // Stage 6 Boss
   STAGE_6: {
     stage: 6,
-    name: 'VOID ANNIHILATOR',
+    names: ['VOID ANNIHILATOR', 'Abyss Destroyer'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-6', // Will randomly use boss-6.fw.png or boss-6-alternative.fw.png
     spawnTime: 60,
     size: 190,
     speed: 2.2,
@@ -278,7 +279,6 @@ const BOSSES = {
     maxHp: 600,
     points: 75000,
     color: '#8000ff',
-    imageKey: 'boss-6',
     attackPatterns: ['ultimate', 'spiral'],
     shootRate: 700,
     bulletSpeed: 11,
@@ -293,7 +293,8 @@ const BOSSES = {
   // Stage 7 Boss
   STAGE_7: {
     stage: 7,
-    name: 'COSMIC TERROR',
+    names: ['COSMIC TERROR', 'Stalker of Worlds'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-7', // Will randomly use boss-7.fw.png or boss-7-alternative.fw.png
     spawnTime: 60,
     size: 200,
     speed: 2.4,
@@ -301,7 +302,6 @@ const BOSSES = {
     maxHp: 700,
     points: 100000,
     color: '#ff0040',
-    imageKey: 'boss-7',
     attackPatterns: ['ultimate', 'spiral', 'spread'],
     shootRate: 650,
     bulletSpeed: 11,
@@ -316,7 +316,8 @@ const BOSSES = {
   // Stage 8 Boss
   STAGE_8: {
     stage: 8,
-    name: 'STELLAR DESTROYER',
+    names: ['STELLAR DESTROYER', 'Star Eater'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-8', // Will randomly use boss-8.fw.png or boss-8-alternative.fw.png
     spawnTime: 60,
     size: 210,
     speed: 2.6,
@@ -324,7 +325,6 @@ const BOSSES = {
     maxHp: 800,
     points: 150000,
     color: '#40ff00',
-    imageKey: 'boss-8',
     attackPatterns: ['ultimate', 'spiral', 'aimed'],
     shootRate: 600,
     bulletSpeed: 12,
@@ -339,7 +339,8 @@ const BOSSES = {
   // Stage 9 Boss
   STAGE_9: {
     stage: 9,
-    name: 'GALACTIC NIGHTMARE',
+    names: ['GALACTIC NIGHTMARE', 'Dream Devourer'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-9', // Will randomly use boss-9.fw.png or boss-9-alternative.fw.png
     spawnTime: 60,
     size: 220,
     speed: 2.8,
@@ -347,7 +348,6 @@ const BOSSES = {
     maxHp: 900,
     points: 200000,
     color: '#00ffff',
-    imageKey: 'boss-9',
     attackPatterns: ['ultimate', 'spiral', 'spread', 'aimed'],
     shootRate: 550,
     bulletSpeed: 12,
@@ -362,7 +362,8 @@ const BOSSES = {
   // Stage 10 Boss
   STAGE_10: {
     stage: 10,
-    name: 'UNIVERSAL DEVOURER',
+    names: ['UNIVERSAL DEVOURER', 'Reality Hunter'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-10', // Will randomly use boss-10.fw.png or boss-10-alternative.fw.png
     spawnTime: 60,
     size: 230,
     speed: 3.0,
@@ -370,7 +371,6 @@ const BOSSES = {
     maxHp: 1000,
     points: 250000,
     color: '#ff8000',
-    imageKey: 'boss-10',
     attackPatterns: ['ultimate'],
     shootRate: 500,
     bulletSpeed: 13,
@@ -385,7 +385,8 @@ const BOSSES = {
   // Stage 11 Boss
   STAGE_11: {
     stage: 11,
-    name: 'DIMENSION SHREDDER',
+    names: ['DIMENSION SHREDDER', 'Void Walker'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-11', // Will randomly use boss-11.fw.png or boss-11-alternative.fw.png
     spawnTime: 60,
     size: 240,
     speed: 3.2,
@@ -393,7 +394,6 @@ const BOSSES = {
     maxHp: 1200,
     points: 350000,
     color: '#ff00bf',
-    imageKey: 'boss-11',
     attackPatterns: ['ultimate', 'spiral'],
     shootRate: 450,
     bulletSpeed: 13,
@@ -408,7 +408,8 @@ const BOSSES = {
   // Stage 12 Boss
   STAGE_12: {
     stage: 12,
-    name: 'REALITY BREAKER',
+    names: ['REALITY BREAKER', 'World Ender'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-12', // Will randomly use boss-12.fw.png or boss-12-alternative.fw.png
     spawnTime: 60,
     size: 250,
     speed: 3.4,
@@ -416,7 +417,6 @@ const BOSSES = {
     maxHp: 1400,
     points: 500000,
     color: '#80ff00',
-    imageKey: 'boss-12',
     attackPatterns: ['ultimate', 'spiral', 'spread'],
     shootRate: 400,
     bulletSpeed: 14,
@@ -431,7 +431,8 @@ const BOSSES = {
   // Stage 13 Boss
   STAGE_13: {
     stage: 13,
-    name: 'OMEGA VOID LORD',
+    names: ['OMEGA VOID LORD', 'Eternal Darkness'], // 2 names per boss - randomly selected
+    imageKeyBase: 'boss-13', // Will randomly use boss-13.fw.png or boss-13-alternative.fw.png
     spawnTime: 60,
     size: 260,
     speed: 3.6,
@@ -439,7 +440,6 @@ const BOSSES = {
     maxHp: 1600,
     points: 750000,
     color: '#0040ff',
-    imageKey: 'boss-13',
     attackPatterns: ['ultimate'],
     shootRate: 350,
     bulletSpeed: 15,
@@ -1388,15 +1388,31 @@ class GameEngine {
       'enemy-explode-3': '/assets/shooting-enemy/enemy-explode-3.fw.png',
       // Bosses
       'boss-1': '/assets/boss/boss-1.fw.png',
+      'boss-1-alternative': '/assets/boss/boss-1-alternative.fw.png',
       'boss-2': '/assets/boss/boss-2.fw.png',
+      'boss-2-alternative': '/assets/boss/boss-2-alternative.fw.png',
       'boss-3': '/assets/boss/boss-3.fw.png',
+      'boss-3-alternative': '/assets/boss/boss-3-alternative.fw.png',
       'boss-4': '/assets/boss/boss-4.fw.png',
+      'boss-4-alternative': '/assets/boss/boss-4-alternative.fw.png',
       'boss-5': '/assets/boss/boss-5.fw.png',
+      'boss-5-alternative': '/assets/boss/boss-5-alternative.fw.png',
       'boss-6': '/assets/boss/boss-6.fw.png',
+      'boss-6-alternative': '/assets/boss/boss-6-alternative.fw.png',
       'boss-7': '/assets/boss/boss-7.fw.png',
+      'boss-7-alternative': '/assets/boss/boss-7-alternative.fw.png',
       'boss-8': '/assets/boss/boss-8.fw.png',
+      'boss-8-alternative': '/assets/boss/boss-8-alternative.fw.png',
       'boss-9': '/assets/boss/boss-9.fw.png',
+      'boss-9-alternative': '/assets/boss/boss-9-alternative.fw.png',
       'boss-10': '/assets/boss/boss-10.fw.png',
+      'boss-10-alternative': '/assets/boss/boss-10-alternative.fw.png',
+      'boss-11': '/assets/boss/boss-11.fw.png',
+      'boss-11-alternative': '/assets/boss/boss-11-alternative.fw.png',
+      'boss-12': '/assets/boss/boss-12.fw.png',
+      'boss-12-alternative': '/assets/boss/boss-12-alternative.fw.png',
+      'boss-13': '/assets/boss/boss-13.fw.png',
+      'boss-13-alternative': '/assets/boss/boss-13-alternative.fw.png',
       // Power-ups
       'powerup-TRIPLE_SHOT': '/assets/power-ups/fire-3-direction-bullets.png',
       'powerup-EXTRA_LIFE': '/assets/power-ups/additional-life.fw.png',
@@ -3280,6 +3296,7 @@ class GameEngine {
     const now = Date.now();
     
     // Special handling for ALLY_SUPPORT - spawn ONE companion at a time
+    // Companions stay until destroyed (not a timed power-up)
     if (type === 'ALLY_SUPPORT') {
       // Spawn ONE companion in the next available position
       // Collecting multiple times accumulates up to max 3
@@ -3291,8 +3308,15 @@ class GameEngine {
           break; // Stop after spawning ONE companion
         }
       }
+      
+      // Notify React of power-up activation for avatar reaction
+      this.callbacks.onPowerUpActivated?.(type);
+      this.callbacks.onAvatarStateChange?.('power-up');
+      console.log(`Activated ${config.name} - Companion spawned!`);
+      return; // Don't add to activePowerUps - companions stay until destroyed
     }
     
+    // Handle other timed power-ups (can stack)
     if (!this.player.activePowerUps[type]) {
       this.player.activePowerUps[type] = [];
     }
@@ -3492,7 +3516,7 @@ class GameEngine {
     });
     
     console.log(`✅ Companion added at ${position}! Total companions: ${this.companions.length}`);
-    this.soundManager?.playSound('ui.powerup');
+    this.soundManager?.play('powerup.collect');
     return true;
   }
   
@@ -3546,7 +3570,7 @@ class GameEngine {
       
       // Create explosion effect
       this.createParticles(comp.x, comp.y, comp.color, 15);
-      this.soundManager?.playSound('enemy.explosion');
+      this.soundManager?.play('enemy.destroy');
       
       // Remove companion
       this.companions.splice(index, 1);
@@ -3643,6 +3667,16 @@ class GameEngine {
     this.bossActive = true;
     const bossConfig = this.getBossConfig();
     
+    // ==================== RANDOM BOSS IMAGE & NAME ====================
+    // 50% chance for alternative image
+    const useAlternative = Math.random() < 0.5;
+    const imageKey = useAlternative ? `${bossConfig.imageKeyBase || bossConfig.imageKey}-alternative` : (bossConfig.imageKeyBase || bossConfig.imageKey);
+    
+    // Get random name if available (2 names per boss)
+    const bossName = (bossConfig.names && Array.isArray(bossConfig.names)) 
+      ? bossConfig.names[Math.floor(Math.random() * bossConfig.names.length)]
+      : bossConfig.name;
+    
     const boss = {
       x: this.canvas.width / 2,
       y: -80,
@@ -3676,9 +3710,9 @@ class GameEngine {
       specialAttackInterval: bossConfig.specialAttackInterval || 0,
       lastSpecialAttack: 0,
       movementType: bossConfig.movementType || 'side-to-side',
-      name: bossConfig.name,
+      name: bossName,
       stage: bossConfig.stage,
-      image: this.assetLoader.getImage(bossConfig.imageKey)
+      image: this.assetLoader.getImage(imageKey)
     };
     
     this.enemies.push(boss);
@@ -4197,7 +4231,6 @@ class GameEngine {
 
 export default GameEngine;
 export { GAME_CONFIG, ENEMY_TYPES };
-
 
 
 
